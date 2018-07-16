@@ -1,0 +1,13 @@
+{#% form_theme form '@forms/Frontend/form_theme.html.twig' %#}
+
+{% for label, messages in app.flashes %}
+    {% for message in messages %}
+        <div class="alert alert-{{ label }}">
+            {{ message|raw }}
+        </div>
+    {% endfor %}
+{% endfor %}
+
+{% if form.vars.submitted == false or form.vars.valid == false %}
+    {{ form(form) }}
+{% endif %}

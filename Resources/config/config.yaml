@@ -1,0 +1,46 @@
+twig:
+    paths:
+        '%kernel.project_dir%/vendor/revisionTen/forms/Templates': forms
+    form_themes:
+          - '@forms/Frontend/form_theme.html.twig'
+
+framework:
+    translator:
+        paths:
+            - '%kernel.project_dir%/vendor/revisionTen/forms/Resources/translations'
+
+doctrine:
+    orm:
+        mappings:
+            FormsBundle:
+                mapping: true
+                type: annotation
+                dir: 'Model'
+                alias: FormsBundle
+                prefix: 'RevisionTen\Forms\Model'
+                is_bundle: true
+
+services:
+    RevisionTen\Forms\Controller\:
+        autowire: true
+        autoconfigure: true
+        resource: '../../Controller'
+        tags: ['controller.service_arguments']
+    RevisionTen\Forms\Form\Items\EntityItem:
+        autoconfigure: true
+        autowire: true
+        public: true
+        tags: [form.type]
+    formservice:
+        alias: RevisionTen\Forms\Services\FormService
+        public: true
+    RevisionTen\Forms\Services\FormService:
+        autowire: true
+        public: true
+        arguments:
+            $config: '%forms%'
+    RevisionTen\Forms\Listener\:
+        resource: '../../Listener/*'
+        exclude: '../../Listener/{FormBaseListener.php}'
+        public: true
+        autowire: true

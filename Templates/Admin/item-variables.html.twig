@@ -1,0 +1,14 @@
+{# NOT USED #}
+{% for item in item.items %}
+    {% if item.itemName != 'SubmitItem' %}
+        <code>{% verbatim %}{{{% endverbatim %} {{ prefix }}{{ item.data.name }} {% verbatim %}}}{% endverbatim %}</code>
+    {% endif %}
+{% endfor %}
+
+{# Render children #}
+{% for item in item.items %}
+    {% if item.items is defined and item.items|length > 0 %}
+        {% set prefix = item.data.name ~ '.' %}
+        {% include '@forms/Admin/item-variables.html.twig' %}
+    {% endif %}
+{% endfor %}

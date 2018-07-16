@@ -1,0 +1,31 @@
+# Default forms bundle config.
+forms:
+    load_easyadmin_config: true
+    item_types:
+        #GroupItem:
+        #    class: RevisionTen\Forms\Form\Items\GroupItem
+        #    icon: 'fa-object-group'
+        TextItem:
+            class: RevisionTen\Forms\Form\Items\TextItem
+            icon: 'fa-comment'
+        TextAreaItem:
+            class: RevisionTen\Forms\Form\Items\TextAreaItem
+            icon: 'fa-book'
+        EmailItem:
+            class: RevisionTen\Forms\Form\Items\EmailItem
+            icon: 'fa-at'
+        CheckboxItem:
+            class: RevisionTen\Forms\Form\Items\CheckboxItem
+            icon: 'fa-check-square'
+        ChoiceItem:
+            class: RevisionTen\Forms\Form\Items\ChoiceItem
+            icon: 'fa-list-ul'
+        EntityItem:
+            class: RevisionTen\Forms\Form\Items\EntityItem
+            icon: 'fa-database'
+        MarkupItem:
+            class: RevisionTen\Forms\Form\Items\MarkupItem
+            icon: 'fa-code'
+        SubmitItem:
+            class: RevisionTen\Forms\Form\Items\SubmitItem
+            icon: 'fa-paper-plane'

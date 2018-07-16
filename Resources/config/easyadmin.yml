@@ -1,0 +1,26 @@
+easy_admin:
+    design:
+        menu:
+            - label: 'Forms'
+              icon: 'envelope'
+              children:
+                    - { label: 'Manage Forms', entity: 'FormRead', icon: 'check' }
+                    - { label: 'Add Form', route: 'forms_create_form', icon: 'plus' }
+    entities:
+        FormRead:
+            label: 'Forms'
+            class: RevisionTen\Forms\Model\FormRead
+            list:
+                dql_filter: 'entity.deleted IS NULL OR entity.deleted = 0'
+                actions:
+                    - { name: 'forms_edit_aggregate', type: 'route', label: 'edit form', icon: 'edit' }
+                    - { name: 'forms_clone_aggregate', type: 'route', label: 'clone form', icon: 'clone' }
+                    - { name: 'forms_delete_aggregate', type: 'route', label: 'delete form', icon: 'trash', css_class: 'text-danger' }
+                    - '-new'
+                    - '-edit'
+                    - '-delete'
+                fields:
+                    - 'title'
+                    - 'version'
+                    - { property: 'created', type: 'datetime' }
+                    - { property: 'modified', type: 'datetime' }
