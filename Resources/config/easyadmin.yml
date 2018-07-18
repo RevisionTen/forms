@@ -20,6 +20,7 @@ easy_admin:
                     - '-edit'
                     - '-delete'
                 fields:
+                    - 'id'
                     - 'title'
                     - 'version'
                     - { property: 'created', type: 'datetime' }
