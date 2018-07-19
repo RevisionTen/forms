@@ -609,7 +609,8 @@ class FormController extends Controller
         $form = $formService->getForm($formUuid, $defaultData, $ignore_validation);
         $form->handleRequest($request);
 
-        $hasTimeLimitCookie = $request->cookies->has('submitLimit') ? true : false;
+        #$hasTimeLimitCookie = $request->cookies->has('submitLimit') ? true : false;
+        $hasTimeLimitCookie = false;
         $ip = $request->getClientIp();
 
         // Check for recent submissions by this ip on this form.
@@ -776,7 +777,7 @@ class FormController extends Controller
                     $seconds = $aggregateData['timelimit'] ?? false;
                     if ($seconds) {
                         $expiresTimestamp = time() + intval($seconds);
-                        setcookie('submitLimit', '1', $expiresTimestamp);
+                        #setcookie('submitLimit', '1', $expiresTimestamp);
                         $expires = new \DateTime();
                         $expires->setTimestamp($expiresTimestamp);
                         $formSubmission = new FormSubmission($formRead, $ip, $expires);
