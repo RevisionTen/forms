@@ -708,12 +708,19 @@ class FormController extends Controller
 
                     // Get To Email.
                     $to = $this->getField($aggregateData, $data, 'isReceiver') ?? $formRead->getEmail();
+                    $message->setTo(self::getMailsFromString($to));
 
-                    // Handle multiple recipients.
-                    $receivers = explode(',', $to);
-                    $receivers = array_map('trim', $receivers);
+                    // Get CC Email.
+                    $cc = $formRead->getEmailCC();
+                    if ($cc) {
+                        $message->setCc(self::getMailsFromString($cc));
+                    }
 
-                    $message->setTo($receivers);
+                    // Get BCC Email.
+                    $bcc = $formRead->getEmailBCC();
+                    if ($bcc) {
+                        $message->setBcc(self::getMailsFromString($bcc));
+                    }
 
                     // Get ReplyTo Email.
                     $replyTo = $this->getField($aggregateData, $data, 'replyTo');
@@ -798,6 +805,16 @@ class FormController extends Controller
             'request' => $request,
             'ignore_validation' => $ignore_validation,
         ]);
+    }
+
+    /**
+     * @param string $mails
+     *
+     * @return array
+     */
+    private static function getMailsFromString(string $mails): array
+    {
+        return array_map('trim', explode(',', $mails));
     }
 
     /**

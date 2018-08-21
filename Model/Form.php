@@ -15,6 +15,12 @@ final class Form extends Aggregate
     public $email;
 
     /** @var string */
+    public $emailCC;
+
+    /** @var string */
+    public $emailBCC;
+
+    /** @var string */
     public $sender;
 
     /** @var integer */

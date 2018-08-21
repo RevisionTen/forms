@@ -63,6 +63,18 @@ class FormRead
 
     /**
      * @var string
+     * @ORM\Column(type="string", nullable=true)
+     */
+    private $emailCC;
+
+    /**
+     * @var string
+     * @ORM\Column(type="string", nullable=true)
+     */
+    private $emailBCC;
+
+    /**
+     * @var string
      * @ORM\Column(type="string")
      */
     private $sender;
@@ -225,6 +237,46 @@ class FormRead
     public function setEmail(string $email): self
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEmailCC(): ?string
+    {
+        return $this->emailCC;
+    }
+
+    /**
+     * @param string $emailCC
+     *
+     * @return FormRead
+     */
+    public function setEmailCC(string $emailCC = null): self
+    {
+        $this->emailCC = $emailCC;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEmailBCC(): ?string
+    {
+        return $this->emailBCC;
+    }
+
+    /**
+     * @param string $emailBCC
+     *
+     * @return FormRead
+     */
+    public function setEmailBCC(string $emailBCC = null): self
+    {
+        $this->emailBCC = $emailBCC;
 
         return $this;
     }

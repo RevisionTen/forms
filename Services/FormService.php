@@ -94,6 +94,8 @@ class FormService
 
         $formRead->setTitle($aggregate->title);
         $formRead->setEmail($aggregate->email);
+        $formRead->setEmailCC($aggregate->emailCC);
+        $formRead->setEmailBCC($aggregate->emailBCC);
         $formRead->setSender($aggregate->sender);
         $formRead->setTemplate($aggregate->template);
         $formRead->setEmailTemplate($aggregate->emailTemplate);

@@ -29,7 +29,23 @@ class FormType extends AbstractType
         $builder->add('email', TextType::class, [
             'label' => 'Receiver',
             'attr' => [
-                'placeholder' => 'Receiver',
+                'placeholder' => 'A comma separated list of emails',
+            ],
+        ]);
+
+        $builder->add('emailCC', TextType::class, [
+            'label' => 'CC',
+            'required' => false,
+            'attr' => [
+                'placeholder' => 'A comma separated list of emails',
+            ],
+        ]);
+
+        $builder->add('emailBCC', TextType::class, [
+            'label' => 'BCC',
+            'required' => false,
+            'attr' => [
+                'placeholder' => 'A comma separated list of emails',
             ],
         ]);
 
