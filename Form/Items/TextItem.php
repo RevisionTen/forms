@@ -92,7 +92,10 @@ class TextItem extends Item
         if ((isset($item['min']) && $item['min']) || isset($item['max']) && $item['max']) {
             $min = $item['min'] ?? 0;
             $max = $item['max'] ?? null;
-            $options['constraints'][] = new Length($min, $max);
+            $options['constraints'][] = new Length([
+                'min' => $min,
+                'max' => $max,
+            ]);
         }
 
         $builder->add($item['name'], TextType::class, $options);
