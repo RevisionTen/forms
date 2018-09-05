@@ -647,7 +647,7 @@ class FormController extends Controller
 
         if (!$ignore_validation && !$hasTimeLimitCookie && $form->isSubmitted()) {
 
-            $data = $submittedData; // $form->getData();
+            $data = array_merge($defaultData, $submittedData); // $form->getData();
             $aggregateData = json_decode(json_encode($formRead->getPayload()), true);
 
             // Execute onValidate listeners.
