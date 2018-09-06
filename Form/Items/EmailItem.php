@@ -25,6 +25,11 @@ class EmailItem extends TextItem
             'label' => 'Reply to this Email',
             'required' => false,
         ]);
+
+        $builder->add('isReceiver', CheckboxType::class, [
+            'label' => 'Is Receiver',
+            'required' => false,
+        ]);
     }
 
     /**
