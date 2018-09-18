@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace RevisionTen\Forms\Form\Items;
 
 use RevisionTen\Forms\Form\MarkupType;
-use Ivory\CKEditorBundle\Form\Type\CKEditorType;
 use Symfony\Component\Form\FormBuilderInterface;
 
 class MarkupItem extends Item
@@ -19,8 +18,14 @@ class MarkupItem extends Item
 
         $builder->remove('read_only');
         $builder->remove('required');
+        
+        if (class_exists('\Ivory\CKEditorBundle\Form\Type\CKEditorType')) {
+            $textAreaType = \Ivory\CKEditorBundle\Form\Type\CKEditorType::class;
+        } else {
+            $textAreaType = TextareaType::class;
+        }
 
-        $builder->add('markup', CKEditorType::class, [
+        $builder->add('markup', $textAreaType, [
             'label' => 'Markup',
             'required' => true,
         ]);
