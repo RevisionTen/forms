@@ -6,6 +6,7 @@ namespace RevisionTen\Forms\Form\Items;
 
 use RevisionTen\Forms\Form\MarkupType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 class MarkupItem extends Item
 {
