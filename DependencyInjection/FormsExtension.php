@@ -10,9 +10,29 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class FormsExtension extends Extension implements PrependExtensionInterface
 {
+    /**
+     * Merge all forms configs in reverse order.
+     * First (user defined) config is most important.
+     *
+     * @param array $configs
+     *
+     * @return array
+     */
+    private static function mergeFormsConfig(array $configs): array
+    {
+        $configs = array_reverse($configs);
+        $config = [];
+        foreach ($configs as $subConfig) {
+            $config = array_merge($config, $subConfig);
+        }
+
+        return $config;
+    }
+
     public function load(array $configs, ContainerBuilder $container)
     {
-        $config = $this->processConfiguration(new Configuration(), $configs);
+        $config = self::mergeFormsConfig($configs);
+
         $container->setParameter('forms', $config);
     }
 
@@ -31,19 +51,14 @@ class FormsExtension extends Extension implements PrependExtensionInterface
             }
         }
 
-        $configIsLoaded = false;
         if ($loadEasyAdminConfig) {
             // Load EasyAdmin configuration.
-            $configIsLoaded = true;
             $loader->load('easyadmin.yml');
         }
 
-        if (empty($config)) {
+        if (empty($configs)) {
             // Load default forms bundle config.
             $loader->load('forms.yaml');
-            if (!$configIsLoaded) {
-                $loader->load('easyadmin.yml');
-            }
         }
     }
 }
