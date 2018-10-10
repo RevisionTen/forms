@@ -99,6 +99,7 @@ class FormService
         $formRead->setSender($aggregate->sender);
         $formRead->setTemplate($aggregate->template);
         $formRead->setEmailTemplate($aggregate->emailTemplate);
+        $formRead->setEmailTemplateCopy($aggregate->emailTemplateCopy);
         $formRead->setDeleted($aggregate->deleted);
         $formRead->setHtml($aggregate->html);
         $formRead->setSuccessText($aggregate->successText);

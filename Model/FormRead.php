@@ -92,6 +92,12 @@ class FormRead
     private $emailTemplate;
 
     /**
+     * @var string
+     * @ORM\Column(type="text", nullable=true)
+     */
+    private $emailTemplateCopy;
+
+    /**
      * @var bool
      * @ORM\Column(type="boolean", nullable=true)
      */
@@ -337,6 +343,26 @@ class FormRead
     public function setEmailTemplate(string $emailTemplate = null): self
     {
         $this->emailTemplate = $emailTemplate;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEmailTemplateCopy(): ?string
+    {
+        return $this->emailTemplateCopy;
+    }
+
+    /**
+     * @param string $emailTemplateCopy
+     *
+     * @return FormRead
+     */
+    public function setEmailTemplateCopy(string $emailTemplateCopy = null): self
+    {
+        $this->emailTemplateCopy = $emailTemplateCopy;
 
         return $this;
     }

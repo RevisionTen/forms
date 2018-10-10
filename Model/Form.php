@@ -35,6 +35,9 @@ final class Form extends Aggregate
     /** @var string */
     public $emailTemplate;
 
+    /** @var string */
+    public $emailTemplateCopy;
+
     /** @var bool */
     public $html;
 

@@ -82,6 +82,15 @@ class FormType extends AbstractType
             ],
         ]);
 
+        $builder->add('emailTemplateCopy', TextareaType::class, [
+            'label' => 'Email Template CC/BCC',
+            'required' => false,
+            'attr' => [
+                'rows' => 10,
+                'placeholder' => 'Email Template CC/BCC',
+            ],
+        ]);
+
         $builder->add('html', CheckboxType::class, [
             'label' => 'Send as HTML',
             'required' => false,

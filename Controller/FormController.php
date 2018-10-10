@@ -746,35 +746,48 @@ class FormController extends Controller
                     // Get Subject.
                     $message->setSubject($this->getField($aggregateData, $data, 'isSubject') ?? $formRead->getTitle());
 
-                    // Try to render the twig template.
-                    /** @var \Twig_Environment $twig */
-                    $twig = $this->get('twig');
-                    $templateFailed = false;
-                    try {
-                        $view = $twig->createTemplate($emailTemplate);
-                        try {
-                            $body = $view->render($data);
-                        } catch (\Twig_Error_Runtime $e) {
-                            $templateFailed = true;
-                        } catch (\Throwable $e) {
-                            $templateFailed = true;
-                        }
-                    } catch (\Twig_Error_Syntax $e) {
-                        $templateFailed = true;
-                    } catch (\Twig_Error_Loader $e) {
-                        $templateFailed = true;
+                    $renderedTemplate = $this->renderEmailTemplate($emailTemplate, $data);
+
+                    $emailTemplateCopy = $formRead->getEmailTemplateCopy();
+                    $renderedTemplateCopy = false;
+                    if ($emailTemplateCopy && !empty($emailTemplateCopy)) {
+                        $renderedTemplateCopy = $this->renderEmailTemplate($emailTemplateCopy, $data);
                     }
 
                     // If rendering the twig template fails json_encode the raw form data and send as plain text with error attached.
-                    if ($templateFailed) {
-                        $body = 'An Error occurred: '.$e->getRawMessage()."\nPlease check your Email-Template at line ".$e->getTemplateLine().". \nHere is the raw form submission:";
-                        $body .= "\n\n".json_encode($request->request->all());
+                    if (null === $renderedTemplate['body'] && is_object($renderedTemplate['error']) && method_exists($renderedTemplate['error'], 'getRawMessage')) {
+                        $renderedTemplate['body'] = 'An Error occurred: '.$renderedTemplate['error']->getRawMessage()."\nPlease check your Email-Template at line ".$renderedTemplate['error']->getTemplateLine().". \nHere is the raw form submission:";
+                        $renderedTemplate['body'] .= "\n\n".json_encode($request->request->all());
                         $formRead->setHtml(false);
                     }
+                    $message->setBody($renderedTemplate['body'] ?? 'ERROR', $formRead->getHtml() ? 'text/html' : 'text/plain');
 
-                    $message->setBody($body ?? 'ERROR', $formRead->getHtml() ? 'text/html' : 'text/plain');
+                    if ($renderedTemplateCopy) {
+                        // Send different emails to main recipient and copy recipients.
 
-                    $this->get('mailer')->send($message);
+                        $messageMain = clone $message;
+                        $messageMain->setCc(null);
+                        $messageMain->setBCc(null);
+
+                        // Send to main recipient.
+                        $this->get('mailer')->send($messageMain);
+
+                        // Send copies with different body.
+                        if (null === $renderedTemplateCopy['body'] && is_object($renderedTemplate['error']) && method_exists($renderedTemplate['error'], 'getRawMessage')) {
+                            $renderedTemplateCopy['body'] = 'An Error occurred: '.$renderedTemplateCopy['error']->getRawMessage()."\nPlease check your Email-Template at line ".$renderedTemplateCopy['error']->getTemplateLine().". \nHere is the raw form submission:";
+                            $renderedTemplateCopy['body'] .= "\n\n".json_encode($request->request->all());
+                            $formRead->setHtml(false);
+                        }
+
+                        $message->setBody($renderedTemplateCopy['body'] ?? 'ERROR', $formRead->getHtml() ? 'text/html' : 'text/plain');
+                        $message->setTo(null);
+
+                        $this->get('mailer')->send($message);
+
+                    } else {
+                        $this->get('mailer')->send($message);
+                    }
+
                     // Display Success Message.
                     $this->addFlash(
                         'success',
@@ -805,6 +818,34 @@ class FormController extends Controller
             'request' => $request,
             'ignore_validation' => $ignore_validation,
         ]);
+    }
+
+    private function renderEmailTemplate(string $emailTemplate, $data): ?array
+    {
+        // Try to render the twig template.
+        /** @var \Twig_Environment $twig */
+        $twig = $this->get('twig');
+        $body = null;
+        $e = null;
+        try {
+            $view = $twig->createTemplate($emailTemplate);
+            try {
+                $body = $view->render($data);
+            } catch (\Twig_Error_Runtime $e) {
+                $body = null;
+            } catch (\Throwable $e) {
+                $body = null;
+            }
+        } catch (\Twig_Error_Syntax $e) {
+            $body = null;
+        } catch (\Twig_Error_Loader $e) {
+            $body = null;
+        }
+
+        return [
+            'body' => $body,
+            'error' => $e,
+        ];
     }
 
     /**
