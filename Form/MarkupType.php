@@ -27,7 +27,7 @@ class MarkupType extends AbstractType
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults(array(
-            'markup' => 'peee',
+            'markup' => '',
         ));
     }
 }
