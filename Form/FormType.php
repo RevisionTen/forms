@@ -75,7 +75,7 @@ class FormType extends AbstractType
 
         $builder->add('emailTemplate', TextareaType::class, [
             'label' => 'Email Template',
-            'required' => false,
+            'required' => true,
             'attr' => [
                 'rows' => 10,
                 'placeholder' => 'Email Template',
