@@ -36,6 +36,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Translation\TranslatorInterface;
 
@@ -69,7 +70,7 @@ class FormController extends Controller
             } else {
                 $originalValue = $base[$property];
 
-                if (is_array($value) && is_array($originalValue)) {
+                if (\is_array($value) && \is_array($originalValue)) {
                     // Check if values arrays are identical.
                     if (0 !== strcmp(json_encode($value), json_encode($originalValue))) {
                         // Arrays are not equal.
@@ -91,12 +92,13 @@ class FormController extends Controller
     /**
      * Returns info from the messageBus.
      *
+     * @param string|NULL $formUuid
+     * @param MessageBus  $messageBus
+     *
      * @return JsonResponse|RedirectResponse|Response
      */
-    public function errorResponse(string $formUuid = null)
+    public function errorResponse(string $formUuid = null, MessageBus $messageBus)
     {
-        /** @var MessageBus $messageBus */
-        $messageBus = $this->get('messagebus');
         $messages = $messageBus->getMessagesJson();
 
         if ($formUuid) {
@@ -108,9 +110,9 @@ class FormController extends Controller
             }
 
             return $this->redirectToForm($formUuid);
-        } else {
-            return new JsonResponse($messages);
         }
+
+        return new JsonResponse($messages);
     }
 
     /**
@@ -131,9 +133,9 @@ class FormController extends Controller
             return $this->redirectToRoute('forms_edit_aggregate', [
                 'id' => $formRead->getId(),
             ]);
-        } else {
-            return $this->redirect('/admin');
         }
+
+        return $this->redirect('/admin');
     }
 
     /**
@@ -143,12 +145,13 @@ class FormController extends Controller
      *
      * @param Request    $request
      * @param CommandBus $commandBus
+     * @param MessageBus $messageBus
      *
-     * @return Response
+     * @return JsonResponse|RedirectResponse|Response
      */
-    public function createFormAggregate(Request $request, CommandBus $commandBus)
+    public function createFormAggregate(Request $request, CommandBus $commandBus, MessageBus $messageBus)
     {
-        /** @var User $user */
+        /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
         $form = $this->createForm(FormType::class);
@@ -172,15 +175,15 @@ class FormController extends Controller
                 );
 
                 return $this->redirectToForm($aggregateUuid);
-            } else {
-                return $this->errorResponse($aggregateUuid);
             }
+
+            return $this->errorResponse($aggregateUuid, $messageBus);
         }
 
-        return $this->render('@forms/Form/form.html.twig', array(
+        return $this->render('@forms/Form/form.html.twig', [
             'title' => 'Add Form',
             'form' => $form->createView(),
-        ));
+        ]);
     }
 
     /**
@@ -188,14 +191,15 @@ class FormController extends Controller
      *
      * @param Request                $request
      * @param CommandBus             $commandBus
+     * @param MessageBus             $messageBus
      * @param AggregateFactory       $aggregateFactory
      * @param EntityManagerInterface $em
      *
      * @return Response
      */
-    public function deleteAggregateAction(Request $request, CommandBus $commandBus, AggregateFactory $aggregateFactory, EntityManagerInterface $em): Response
+    public function deleteAggregateAction(Request $request, CommandBus $commandBus, MessageBus $messageBus, AggregateFactory $aggregateFactory, EntityManagerInterface $em): Response
     {
-        /** @var User $user */
+        /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
         /** @var int $id FormRead Id. */
         $id = $request->get('id');
@@ -217,11 +221,7 @@ class FormController extends Controller
             $success = true;
         }));
 
-        if ($success) {
-            return $this->redirect('/admin/?entity=FormRead&action=list');
-        } else {
-            return $this->errorResponse($formAggregate->getUuid());
-        }
+        return $success ? $this->redirect('/admin/?entity=FormRead&action=list') : $this->errorResponse($formAggregate->getUuid(), $messageBus);
     }
 
     /**
@@ -229,15 +229,16 @@ class FormController extends Controller
      *
      * @param Request                $request
      * @param CommandBus             $commandBus
+     * @param MessageBus             $messageBus
      * @param AggregateFactory       $aggregateFactory
      * @param FormService            $formService
      * @param EntityManagerInterface $em
      *
      * @return Response
      */
-    public function editAggregateAction(Request $request, CommandBus $commandBus, AggregateFactory $aggregateFactory, FormService $formService, EntityManagerInterface $em): Response
+    public function editAggregateAction(Request $request, CommandBus $commandBus, MessageBus $messageBus, AggregateFactory $aggregateFactory, FormService $formService, EntityManagerInterface $em): Response
     {
-        /** @var User $user */
+        /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
         /** @var int $id FormRead Id. */
         $id = $request->get('id');
@@ -256,16 +257,16 @@ class FormController extends Controller
 
         // Get item variables.
         $itemVariables = [];
-        if (isset($aggregateData['items']) && is_array($aggregateData['items']) && count($aggregateData['items']) > 0) {
+        if (isset($aggregateData['items']) && \is_array($aggregateData['items']) && \count($aggregateData['items']) > 0) {
             foreach ($aggregateData['items'] as $item) {
+                /** @var ItemInterface $itemType */
                 $itemType = $formService->getItemClass($item['itemName']);
                 $itemVariables[] = $itemType::getVariables($item['data']);
             }
         }
 
         // Create Edit Form.
-        unset($aggregateData['uuid']);
-        unset($aggregateData['items']);
+        unset($aggregateData['uuid'], $aggregateData['items']);
         $form = $this->createForm(FormType::class, $aggregateData);
         $form->handleRequest($request);
 
@@ -288,13 +289,13 @@ class FormController extends Controller
                 );
 
                 return $this->redirectToForm($formUuid);
-            } else {
-                return $this->errorResponse($formAggregate->getUuid());
             }
+
+            return $this->errorResponse($formAggregate->getUuid(), $messageBus);
         }
 
         if (class_exists('\Symfony\Component\HttpKernel\Kernel')) {
-            $symfony4 = '3' === substr(\Symfony\Component\HttpKernel\Kernel::VERSION, 0, 1) ? false : true;
+            $symfony4 = \defined(Kernel::MAJOR_VERSION) && 4 === Kernel::MAJOR_VERSION;
         } else {
             $symfony4 = true;
         }
@@ -334,6 +335,7 @@ class FormController extends Controller
      *
      * @param Request             $request
      * @param CommandBus          $commandBus
+     * @param MessageBus          $messageBus
      * @param AggregateFactory    $aggregateFactory
      * @param FormService         $formService
      * @param TranslatorInterface $translator
@@ -344,9 +346,9 @@ class FormController extends Controller
      *
      * @return Response
      */
-    public function formAddItem(Request $request, CommandBus $commandBus, AggregateFactory $aggregateFactory, FormService $formService, TranslatorInterface $translator, string $formUuid, int $onVersion, string $parent = null, string $itemName): Response
+    public function formAddItem(Request $request, CommandBus $commandBus, MessageBus $messageBus, AggregateFactory $aggregateFactory, FormService $formService, TranslatorInterface $translator, string $formUuid, int $onVersion, string $parent = null, string $itemName): Response
     {
-        /** @var User $user */
+        /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
         /** @var Form $aggregate */
@@ -376,9 +378,9 @@ class FormController extends Controller
                 );
 
                 return $this->redirectToForm($formUuid);
-            } else {
-                return $this->errorResponse($formUuid);
             }
+
+            return $this->errorResponse($formUuid, $messageBus);
         }
 
         $itemNameTranslated = $translator->trans($itemName);
@@ -395,6 +397,7 @@ class FormController extends Controller
      *
      * @param Request             $request
      * @param CommandBus          $commandBus
+     * @param MessageBus          $messageBus
      * @param AggregateFactory    $aggregateFactory
      * @param FormService         $formService
      * @param TranslatorInterface $translator
@@ -404,9 +407,9 @@ class FormController extends Controller
      *
      * @return Response
      */
-    public function formEditItem(Request $request, CommandBus $commandBus, AggregateFactory $aggregateFactory, FormService $formService, TranslatorInterface $translator, string $formUuid, int $onVersion, string $itemUuid): Response
+    public function formEditItem(Request $request, CommandBus $commandBus, MessageBus $messageBus, AggregateFactory $aggregateFactory, FormService $formService, TranslatorInterface $translator, string $formUuid, int $onVersion, string $itemUuid): Response
     {
-        /** @var User $user */
+        /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
         /** @var Form $aggregate */
@@ -417,58 +420,58 @@ class FormController extends Controller
             return $this->redirectToForm($formUuid);
         }
 
-        // Get the item from the Aggregate.
+        // Get the item from the aggregate.
         $item = FormBaseHandler::getItem($aggregate, $itemUuid);
 
-        if ($item && isset($item['data']) && isset($item['itemName'])) {
-            $data = $item;
-            $itemName = $item['itemName'];
+        // Get the form title.
+        $title = $translator->trans('Edit %itemName% field', [
+            '%itemName%' => $translator->trans($item['itemName'] ?? 'Form'),
+        ]);
 
-            $form = $this->getItemForm($formService, $itemName, $data, $aggregate->items);
+        if ($item && isset($item['data'], $item['itemName'])) {
+            $form = $this->getItemForm($formService, $item['itemName'], $item, $aggregate->items);
             $form->handleRequest($request);
 
-            // Get differences in data and check if data has changed.
             if ($form->isSubmitted()) {
+                // Get differences in data and check if data has changed.
                 $data = $form->getData()['data'];
                 // Remove data that hasn't changed.
                 $data = $this->diff($item['data'], $data);
-
                 if (empty($data)) {
                     $form->addError(new FormError($translator->trans('Data has not changed.')));
                 }
-            }
 
-            if ($form->isSubmitted() && $form->isValid()) {
-                // Execute Command.
-                $success = false;
-                $commandBus->dispatch(new FormEditItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
-                    'uuid' => $itemUuid,
-                    'data' => $data,
-                ], function ($commandBus, $event) use (&$success) {
-                    // Callback.
-                    $success = true;
-                }));
+                if ($form->isValid()) {
+                    // Execute Command.
+                    $success = false;
+                    $commandBus->dispatch(new FormEditItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
+                        'uuid' => $itemUuid,
+                        'data' => $data,
+                    ], function ($commandBus, $event) use (&$success) {
+                        // Callback.
+                        $success = true;
+                    }));
 
-                if ($success) {
-                    $this->addFlash(
-                        'success',
-                        $translator->trans('Field edited')
-                    );
+                    if ($success) {
+                        $this->addFlash(
+                            'success',
+                            $translator->trans('Field edited')
+                        );
 
-                    return $this->redirectToForm($formUuid);
-                } else {
-                    return $this->errorResponse($formUuid);
+                        return $this->redirectToForm($formUuid);
+                    }
+
+                    return $this->errorResponse($formUuid, $messageBus);
                 }
             }
-
-            $itemNameTranslated = $translator->trans($itemName);
-            $title = $translator->trans('Edit %itemName% field', ['%itemName%' => $itemNameTranslated]);
-
-            return $this->render('@forms/Form/form.html.twig', [
-                'title' => $title,
-                'form' => $form->createView(),
-            ]);
+        } else {
+            return $this->errorResponse($formUuid, $messageBus);
         }
+
+        return $this->render('@forms/Form/form.html.twig', [
+            'title' => $title,
+            'form' => $form->createView(),
+        ]);
     }
 
     /**
@@ -477,6 +480,7 @@ class FormController extends Controller
      * @Route("/remove-item/{formUuid}/{onVersion}/{itemUuid}", name="forms_remove_item")
      *
      * @param CommandBus          $commandBus
+     * @param MessageBus          $messageBus
      * @param TranslatorInterface $translator
      * @param string              $formUuid
      * @param int                 $onVersion
@@ -484,9 +488,9 @@ class FormController extends Controller
      *
      * @return JsonResponse|Response
      */
-    public function formRemoveItem(CommandBus $commandBus, TranslatorInterface $translator, string $formUuid, int $onVersion, string $itemUuid)
+    public function formRemoveItem(CommandBus $commandBus, MessageBus $messageBus, TranslatorInterface $translator, string $formUuid, int $onVersion, string $itemUuid)
     {
-        /** @var User $user */
+        /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
         $success = false;
@@ -504,9 +508,9 @@ class FormController extends Controller
             );
 
             return $this->redirectToForm($formUuid);
-        } else {
-            return $this->errorResponse($formUuid);
         }
+
+        return $this->errorResponse($formUuid, $messageBus);
     }
 
     /**
@@ -515,6 +519,7 @@ class FormController extends Controller
      * @Route("/shift-item/{formUuid}/{onVersion}/{itemUuid}/{direction}", name="forms_shift_item")
      *
      * @param CommandBus          $commandBus
+     * @param MessageBus          $messageBus
      * @param TranslatorInterface $translator
      * @param string              $formUuid
      * @param int                 $onVersion
@@ -523,9 +528,9 @@ class FormController extends Controller
      *
      * @return JsonResponse|Response
      */
-    public function formShiftItem(CommandBus $commandBus, TranslatorInterface $translator, string $formUuid, int $onVersion, string $itemUuid, string $direction)
+    public function formShiftItem(CommandBus $commandBus, MessageBus $messageBus, TranslatorInterface $translator, string $formUuid, int $onVersion, string $itemUuid, string $direction)
     {
-        /** @var User $user */
+        /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
         $success = false;
@@ -544,9 +549,9 @@ class FormController extends Controller
             );
 
             return $this->redirectToForm($formUuid);
-        } else {
-            return $this->errorResponse($formUuid);
         }
+
+        return $this->errorResponse($formUuid, $messageBus);
     }
 
     /**
@@ -568,7 +573,7 @@ class FormController extends Controller
     {
         $isField = false;
         $payload = json_decode(json_encode($payload), true);
-        if ($payload['items'] && is_array($payload['items']) && count($payload['items']) > 0) {
+        if ($payload['items'] && \is_array($payload['items']) && \count($payload['items']) > 0) {
             foreach ($payload['items'] as $item) {
                 if (isset($item['data'][$propertyName]) && $item['data'][$propertyName]) {
                     $isField = $item['data']['name'];
@@ -580,50 +585,50 @@ class FormController extends Controller
     }
 
     /**
-     * TODO: Autowire everything.
+     * TODO: Breakup monster method.
      *
-     * @param string $formUuid
-     * @param string $template
-     * @param array  $defaultData
+     * @param \Swift_Mailer          $mailer
+     * @param \Twig_Environment      $twig
+     * @param EntityManagerInterface $entityManager
+     * @param RequestStack           $requestStack
+     * @param FormService            $formService
+     * @param string                 $formUuid
+     * @param string                 $template
+     * @param array                  $defaultData
      *
      * @return Response
      */
-    public function renderFormAction(string $formUuid, string $template = '@forms/Frontend/form.html.twig', array $defaultData): Response
+    public function renderFormAction(\Swift_Mailer $mailer, \Twig_Environment $twig, EntityManagerInterface $entityManager, RequestStack $requestStack, FormService $formService, string $formUuid, string $template = '@forms/Frontend/form.html.twig', array $defaultData): Response
     {
-        /** @var EntityManager $em */
-        $em = $this->getDoctrine()->getManager();
+        /**
+         * Get the FormRead entity.
+         *
+         * @var FormRead $formRead
+         */
+        $formRead = $entityManager->getRepository(FormRead::class)->findOneByUuid($formUuid);
 
-        // Get the FormRead Entity.
-        /** @var FormRead $formRead */
-        $formRead = $em->getRepository(FormRead::class)->findOneByUuid($formUuid);
-
-        /** @var RequestStack $requestStack */
-        $requestStack = $this->get('request_stack');
         $request = $requestStack->getMasterRequest();
-
-        /** @var FormService $formService */
-        $formService = $this->get('formservice');
-
-        $ignore_validation = (bool) $request->get('ignore_validation');
-
+        $ignore_validation = null !== $request && $request->get('ignore_validation');
         $form = $formService->getForm($formUuid, $defaultData, $ignore_validation);
         $form->handleRequest($request);
-
-        #$hasTimeLimitCookie = $request->cookies->has('submitLimit') ? true : false;
-        $hasTimeLimitCookie = false;
         $ip = $request->getClientIp();
 
-        // Check for recent submissions by this ip on this form.
-        /** @var FormSubmission $formSubmission */
-        $formSubmission = $em->getRepository(FormSubmission::class)->findOneBy([
+        /**
+         * Check for recent submissions by this ip on this form.
+         *
+         * @var FormSubmission[] $formSubmissions
+         */
+        $formSubmissions = $entityManager->getRepository(FormSubmission::class)->findBy([
             'ip' => $ip,
             'form' => $formRead->getId(),
         ], [
             'created' => Criteria::DESC,
-        ]);
+        ], 1);
+        /** @var FormSubmission $formSubmission */
+        $formSubmission = null !== $formSubmissions ? array_values($formSubmissions)[0] : null;
 
         $hasIpBlock = false;
-        if ($formSubmission && time() < $formSubmission->getExpires()->getTimestamp()) {
+        if (null !== $formSubmission && time() < $formSubmission->getExpires()->getTimestamp()) {
             $hasIpBlock = true;
         }
 
@@ -632,7 +637,7 @@ class FormController extends Controller
             $submittedData[$fieldName] = $fieldValue->getData();
         }
 
-        if (!$ignore_validation && ($hasTimeLimitCookie || $hasIpBlock)) {
+        if (!$ignore_validation && $hasIpBlock) {
             $aggregateData = json_decode(json_encode($formRead->getPayload()), true);
             $timeLimitMessage = $aggregateData['timeLimitMessage'] ?? $this->get('translator')->trans('You have already submitted the form, please try again later');
             if ($form->isSubmitted()) {
@@ -645,171 +650,153 @@ class FormController extends Controller
             }
         }
 
-        if (!$ignore_validation && !$hasTimeLimitCookie && $form->isSubmitted()) {
+        if (!$ignore_validation && !$hasIpBlock && $form->isSubmitted()) {
 
-            $data = array_merge($defaultData, $submittedData); // $form->getData();
+            $data = array_merge($defaultData, $submittedData);
             $aggregateData = json_decode(json_encode($formRead->getPayload()), true);
 
             // Execute onValidate listeners.
             foreach ($aggregateData['items'] as $item) {
                 $itemClass = $formService->getItemClass($item['itemName']);
-                // Get the form as a service or instanciate it.
+                // Get the form as a service or instantiate it.
                 try {
                     $itemForm = $this->get($itemClass);
                 } catch (ServiceNotFoundException $exception) {
                     $itemForm = new $itemClass();
                 }
 
-                if ($itemForm instanceof ItemInterface) {
-                    if (!$itemForm->onValidate($data, $item['data'], $formRead, $form)) {
-                        break;
-                    }
+                if ($itemForm instanceof ItemInterface && !$itemForm->onValidate($data, $item['data'], $formRead, $form)) {
+                    break;
                 }
             }
-        }
 
+            if ($isValid = $form->isValid()) {
+                // Build and send the email.
+                if ($emailTemplate = $formRead->getEmailTemplate()) {
 
-        if (!$ignore_validation && !$hasTimeLimitCookie && $form->isSubmitted() && $form->isValid()) {
+                    // Execute onSubmit listeners.
+                    foreach ($aggregateData['items'] as $item) {
+                        $itemClass = $formService->getItemClass($item['itemName']);
+                        // Get the form as a service or instanciate it.
+                        try {
+                            $itemForm = $this->get($itemClass);
+                        } catch (ServiceNotFoundException $exception) {
+                            $itemForm = new $itemClass();
+                        }
 
-            // Build and send the email.
-            if ($emailTemplate = $formRead->getEmailTemplate()) {
-
-                /** @var FormError[] $errors */
-                $errors = [];
-                $isValid = true;
-
-                // Execute onSubmit listeners.
-                foreach ($aggregateData['items'] as $item) {
-                    $itemClass = $formService->getItemClass($item['itemName']);
-                    // Get the form as a service or instanciate it.
-                    try {
-                        $itemForm = $this->get($itemClass);
-                    } catch (ServiceNotFoundException $exception) {
-                        $itemForm = new $itemClass();
-                    }
-
-                    if ($itemForm instanceof ItemInterface) {
-                        if (!$itemForm->onSubmit($data, $item['data'], $formRead, $form)) {
+                        if ($itemForm instanceof ItemInterface && !$itemForm->onSubmit($data, $item['data'], $formRead, $form)) {
                             $isValid = false;
-                            /*foreach ($errors as $error) {
-                                if ($form->has($item['data']['name'])) {
-                                    $form->get($item['data']['name'])->addError($error);
-                                } else {
-                                    $form->addError($error);
-                                }
-                            }*/
                             break;
                         }
                     }
-                }
 
-                if ($isValid) {
-                    $message = new \Swift_Message();
+                    if ($isValid) {
+                        $message = new \Swift_Message();
 
-                    // Get To Email.
-                    $to = $this->getField($aggregateData, $data, 'isReceiver') ?? $formRead->getEmail();
-                    $message->setTo(self::getMailsFromString($to));
+                        // Get To Email.
+                        $to = $this->getField($aggregateData, $data, 'isReceiver') ?? $formRead->getEmail();
+                        $message->setTo(self::getMailsFromString($to));
 
-                    // Get CC Email.
-                    $cc = $formRead->getEmailCC();
-                    if ($cc) {
-                        $message->setCc(self::getMailsFromString($cc));
-                    }
-
-                    // Get BCC Email.
-                    $bcc = $formRead->getEmailBCC();
-                    if ($bcc) {
-                        $message->setBcc(self::getMailsFromString($bcc));
-                    }
-
-                    // Get ReplyTo Email.
-                    $replyTo = $this->getField($aggregateData, $data, 'replyTo');
-
-                    // Get ReplyTo Name.
-                    $replyToName = null;
-                    $name = $this->getField($aggregateData, $data, 'isName');
-                    $firstname = $this->getField($aggregateData, $data, 'isFirstname');
-                    if ($replyTo && $name && is_string($name)) {
-                        $replyToName = $name;
-                        if ($firstname && is_string($firstname)) {
-                            $replyToName = $firstname.' '.$replyToName;
+                        // Get CC Email.
+                        $cc = $formRead->getEmailCC();
+                        if ($cc) {
+                            $message->setCc(self::getMailsFromString($cc));
                         }
-                    }
 
-                    // Set Reply To.
-                    $message->setReplyTo($replyTo, $replyToName);
+                        // Get BCC Email.
+                        $bcc = $formRead->getEmailBCC();
+                        if ($bcc) {
+                            $message->setBcc(self::getMailsFromString($bcc));
+                        }
 
-                    // Set Sender and From.
-                    $message->setSender($formRead->getSender(), $replyToName ?? 'Website');
-                    $message->setFrom($formRead->getSender(), $replyToName ?? 'Website');
+                        // Get ReplyTo Email.
+                        $replyTo = $this->getField($aggregateData, $data, 'replyTo');
 
-                    // Get Subject.
-                    $message->setSubject($this->getField($aggregateData, $data, 'isSubject') ?? $formRead->getTitle());
+                        // Get ReplyTo Name.
+                        $replyToName = null;
+                        $name = $this->getField($aggregateData, $data, 'isName');
+                        $firstname = $this->getField($aggregateData, $data, 'isFirstname');
+                        if ($replyTo && $name && \is_string($name)) {
+                            $replyToName = $name;
+                            if ($firstname && \is_string($firstname)) {
+                                $replyToName = $firstname.' '.$replyToName;
+                            }
+                        }
 
-                    $renderedTemplate = $this->renderEmailTemplate($emailTemplate, $data);
+                        // Set Reply To.
+                        $message->setReplyTo($replyTo, $replyToName);
 
-                    $emailTemplateCopy = $formRead->getEmailTemplateCopy();
-                    $renderedTemplateCopy = false;
-                    if ($emailTemplateCopy && !empty($emailTemplateCopy)) {
-                        $renderedTemplateCopy = $this->renderEmailTemplate($emailTemplateCopy, $data);
-                    }
+                        // Set Sender and From.
+                        $message->setSender($formRead->getSender(), $replyToName ?? 'Website');
+                        $message->setFrom($formRead->getSender(), $replyToName ?? 'Website');
 
-                    // If rendering the twig template fails json_encode the raw form data and send as plain text with error attached.
-                    if (null === $renderedTemplate['body'] && is_object($renderedTemplate['error']) && method_exists($renderedTemplate['error'], 'getRawMessage')) {
-                        $renderedTemplate['body'] = 'An Error occurred: '.$renderedTemplate['error']->getRawMessage()."\nPlease check your Email-Template at line ".$renderedTemplate['error']->getTemplateLine().". \nHere is the raw form submission:";
-                        $renderedTemplate['body'] .= "\n\n".json_encode($request->request->all());
-                        $formRead->setHtml(false);
-                    }
-                    $message->setBody($renderedTemplate['body'] ?? 'ERROR', $formRead->getHtml() ? 'text/html' : 'text/plain');
+                        // Get Subject.
+                        $message->setSubject($this->getField($aggregateData, $data, 'isSubject') ?? $formRead->getTitle());
 
-                    if ($renderedTemplateCopy) {
-                        // Send different emails to main recipient and copy recipients.
+                        $renderedTemplate = $this->renderEmailTemplate($twig, $emailTemplate, $data);
 
-                        $messageMain = clone $message;
-                        $messageMain->setCc(null);
-                        $messageMain->setBCc(null);
+                        $emailTemplateCopy = $formRead->getEmailTemplateCopy();
+                        $renderedTemplateCopy = false;
+                        if (!empty($emailTemplateCopy)) {
+                            $renderedTemplateCopy = $this->renderEmailTemplate($twig, $emailTemplateCopy, $data);
+                        }
 
-                        // Send to main recipient.
-                        $this->get('mailer')->send($messageMain);
-
-                        // Send copies with different body.
-                        if (null === $renderedTemplateCopy['body'] && is_object($renderedTemplate['error']) && method_exists($renderedTemplate['error'], 'getRawMessage')) {
-                            $renderedTemplateCopy['body'] = 'An Error occurred: '.$renderedTemplateCopy['error']->getRawMessage()."\nPlease check your Email-Template at line ".$renderedTemplateCopy['error']->getTemplateLine().". \nHere is the raw form submission:";
-                            $renderedTemplateCopy['body'] .= "\n\n".json_encode($request->request->all());
+                        // If rendering the twig template fails json_encode the raw form data and send as plain text with error attached.
+                        if (null === $renderedTemplate['body'] && \is_object($renderedTemplate['error']) && method_exists($renderedTemplate['error'], 'getRawMessage')) {
+                            $renderedTemplate['body'] = 'An Error occurred: '.$renderedTemplate['error']->getRawMessage()."\nPlease check your Email-Template at line ".$renderedTemplate['error']->getTemplateLine().". \nHere is the raw form submission:";
+                            $renderedTemplate['body'] .= "\n\n".json_encode($request->request->all());
                             $formRead->setHtml(false);
                         }
+                        $message->setBody($renderedTemplate['body'] ?? 'ERROR', $formRead->getHtml() ? 'text/html' : 'text/plain');
 
-                        $message->setBody($renderedTemplateCopy['body'] ?? 'ERROR', $formRead->getHtml() ? 'text/html' : 'text/plain');
-                        $message->setTo(null);
+                        if ($renderedTemplateCopy) {
+                            // Send different emails to main recipient and copy recipients.
 
-                        $this->get('mailer')->send($message);
+                            $messageMain = clone $message;
+                            $messageMain->setCc(null);
+                            $messageMain->setBcc(null);
 
-                    } else {
-                        $this->get('mailer')->send($message);
+                            // Send to main recipient.
+                            $mailer->send($messageMain);
+
+                            // Send copies with different body.
+                            if (null === $renderedTemplateCopy['body'] && \is_object($renderedTemplate['error']) && method_exists($renderedTemplate['error'], 'getRawMessage')) {
+                                $renderedTemplateCopy['body'] = 'An Error occurred: '.$renderedTemplateCopy['error']->getRawMessage()."\nPlease check your Email-Template at line ".$renderedTemplateCopy['error']->getTemplateLine().". \nHere is the raw form submission:";
+                                $renderedTemplateCopy['body'] .= "\n\n".json_encode($request->request->all());
+                                $formRead->setHtml(false);
+                            }
+
+                            $message->setBody($renderedTemplateCopy['body'] ?? 'ERROR', $formRead->getHtml() ? 'text/html' : 'text/plain');
+                            $message->setTo(null);
+
+                            $mailer->send($message);
+
+                        } else {
+                            $mailer->send($message);
+                        }
+
+                        // Display Success Message.
+                        $this->addFlash(
+                            'success',
+                            $formRead->getSuccessText()
+                        );
+
+                        $seconds = $aggregateData['timelimit'] ?? false;
+                        if ($seconds) {
+                            $expiresTimestamp = time() + (int) $seconds;
+                            $expires = new \DateTime();
+                            $expires->setTimestamp($expiresTimestamp);
+                            $formSubmission = new FormSubmission($formRead, $ip, $expires);
+                            $entityManager->persist($formSubmission);
+                            $entityManager->flush();
+                        }
                     }
-
-                    // Display Success Message.
+                } else {
                     $this->addFlash(
-                        'success',
-                        $formRead->getSuccessText()
+                        'danger',
+                        $this->get('translator')->trans('An Error occurred.')
                     );
-
-                    $seconds = $aggregateData['timelimit'] ?? false;
-                    if ($seconds) {
-                        $expiresTimestamp = time() + intval($seconds);
-                        #setcookie('submitLimit', '1', $expiresTimestamp);
-                        $expires = new \DateTime();
-                        $expires->setTimestamp($expiresTimestamp);
-                        $formSubmission = new FormSubmission($formRead, $ip, $expires);
-                        $em->persist($formSubmission);
-                        $em->flush();
-                    }
                 }
-            } else {
-                $this->addFlash(
-                    'danger',
-                    $this->get('translator')->trans('An Error occurred.')
-                );
             }
         }
 
@@ -820,11 +807,9 @@ class FormController extends Controller
         ]);
     }
 
-    private function renderEmailTemplate(string $emailTemplate, $data): ?array
+    private function renderEmailTemplate(\Twig_Environment $twig, string $emailTemplate, $data): ?array
     {
         // Try to render the twig template.
-        /** @var \Twig_Environment $twig */
-        $twig = $this->get('twig');
         $body = null;
         $e = null;
         try {
@@ -863,14 +848,15 @@ class FormController extends Controller
      *
      * @param Request                $request
      * @param CommandBus             $commandBus
+     * @param MessageBus             $messageBus
      * @param EntityManagerInterface $em
      * @param TranslatorInterface    $translator
      *
      * @return Response
      */
-    public function cloneAggregateAction(Request $request, CommandBus $commandBus, EntityManagerInterface $em, TranslatorInterface $translator): Response
+    public function cloneAggregateAction(Request $request, CommandBus $commandBus, MessageBus $messageBus, EntityManagerInterface $em, TranslatorInterface $translator): Response
     {
-        /** @var User $user */
+        /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
         /** @var int $id FormRead Id. */
         $id = $request->get('id');
@@ -904,8 +890,8 @@ class FormController extends Controller
             );
 
             return $this->redirectToForm($aggregateUuid);
-        } else {
-            return $this->errorResponse($aggregateUuid);
         }
+
+        return $this->errorResponse($aggregateUuid, $messageBus);
     }
 }

@@ -8,8 +8,6 @@ use RevisionTen\Forms\Form\Items\TextItem;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\Forms\Model\FormRead;
 use RevisionTen\CQRS\Services\AggregateFactory;
-use RevisionTen\CQRS\Services\EventBus;
-use RevisionTen\CQRS\Services\EventStore;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormEvent;
@@ -33,16 +31,6 @@ class FormService
     private $aggregateFactory;
 
     /**
-     * @var EventStore
-     */
-    private $eventStore;
-
-    /**
-     * @var EventBus
-     */
-    private $eventBus;
-
-    /**
      * @var FormFactoryInterface
      */
     private $formFactory;
@@ -57,17 +45,13 @@ class FormService
      *
      * @param EntityManagerInterface $em
      * @param AggregateFactory       $aggregateFactory
-     * @param EventStore             $eventStore
-     * @param EventBus               $eventBus
      * @param FormFactoryInterface   $formFactory
      * @param array                  $config
      */
-    public function __construct(EntityManagerInterface $em, AggregateFactory $aggregateFactory, EventStore $eventStore, EventBus $eventBus, FormFactoryInterface $formFactory, array $config)
+    public function __construct(EntityManagerInterface $em, AggregateFactory $aggregateFactory, FormFactoryInterface $formFactory, array $config)
     {
         $this->em = $em;
         $this->aggregateFactory = $aggregateFactory;
-        $this->eventStore = $eventStore;
-        $this->eventBus = $eventBus;
         $this->formFactory = $formFactory;
         $this->config = $config;
     }
@@ -126,6 +110,7 @@ class FormService
     /**
      * @param string $formUuid
      * @param null   $data
+     * @param bool   $ignore_validation
      *
      * @return FormInterface
      */
@@ -158,8 +143,6 @@ class FormService
             }, 900);
         }
 
-        $form = $formBuilder->getForm();
-
-        return $form;
+        return $formBuilder->getForm();
     }
 }

@@ -29,9 +29,9 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
         // A function that removes a item from its parent.
         $removeAndRebase = function (&$collection, $uuid) {
             // Remove the item by filtering the items array.
-            $collection = array_filter($collection, function ($item, $key) use ($uuid) {
+            $collection = array_filter($collection, function ($item) use ($uuid) {
                 return $uuid !== $item['uuid'];
-            }, ARRAY_FILTER_USE_BOTH);
+            });
 
             // Rebase array values.
             $collection = array_values($collection);
@@ -74,10 +74,10 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
     {
         $payload = $command->getPayload();
         // The uuid to remove.
-        $uuid = $payload['uuid'];
-        $item = self::getItem($aggregate, $uuid);
+        $uuid = $payload['uuid'] ?? null;
+        $item = \is_string($uuid) ? self::getItem($aggregate, $uuid) : false;
 
-        if (!isset($uuid)) {
+        if (null === $uuid) {
             $this->messageBus->dispatch(new Message(
                 'No uuid to remove is set',
                 CODE_BAD_REQUEST,
@@ -86,7 +86,9 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
             ));
 
             return false;
-        } elseif (!$item) {
+        }
+
+        if (!$item) {
             $this->messageBus->dispatch(new Message(
                 'Item with this uuid was not found',
                 CODE_CONFLICT,
@@ -95,8 +97,8 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
             ));
 
             return false;
-        } else {
-            return true;
         }
+
+        return true;
     }
 }

@@ -118,7 +118,7 @@ class Item extends AbstractType implements ItemInterface
     /**
      * {@inheritdoc}
      */
-    public function onSubmit(array $data, array $item, FormRead $formRead = null, FormInterface &$form): bool
+    public function onSubmit(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool
     {
         return true;
     }
@@ -126,7 +126,7 @@ class Item extends AbstractType implements ItemInterface
     /**
      * {@inheritdoc}
      */
-    public function onValidate(array $data, array $item, FormRead $formRead = null, FormInterface &$form): bool
+    public function onValidate(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool
     {
         return true;
     }
