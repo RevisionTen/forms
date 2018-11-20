@@ -294,8 +294,8 @@ class FormController extends Controller
             return $this->errorResponse($formAggregate->getUuid(), $messageBus);
         }
 
-        if (class_exists('\Symfony\Component\HttpKernel\Kernel')) {
-            $symfony4 = \defined(Kernel::MAJOR_VERSION) && 4 === Kernel::MAJOR_VERSION;
+        if (class_exists('\Symfony\Component\HttpKernel\Kernel') && \defined('\Symfony\Component\HttpKernel\Kernel::MAJOR_VERSION')) {
+            $symfony4 = 4 === Kernel::MAJOR_VERSION;
         } else {
             $symfony4 = true;
         }
@@ -625,7 +625,7 @@ class FormController extends Controller
             'created' => Criteria::DESC,
         ], 1);
         /** @var FormSubmission $formSubmission */
-        $formSubmission = null !== $formSubmissions ? array_values($formSubmissions)[0] : null;
+        $formSubmission = !empty($formSubmissions) ? array_values($formSubmissions)[0] : null;
 
         $hasIpBlock = false;
         if (null !== $formSubmission && time() < $formSubmission->getExpires()->getTimestamp()) {
