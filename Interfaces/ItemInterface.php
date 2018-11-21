@@ -37,7 +37,7 @@ interface ItemInterface extends FormTypeInterface
      *
      * @return bool
      */
-    public function onSubmit(array $data, array $item, FormRead $formRead = null, FormInterface &$form): bool;
+    public function onSubmit(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool;
 
     /**
      * This method is called when the form is submitted.
@@ -50,5 +50,5 @@ interface ItemInterface extends FormTypeInterface
      *
      * @return bool
      */
-    public function onValidate(array $data, array $item, FormRead $formRead = null, FormInterface &$form): bool;
+    public function onValidate(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool;
 }

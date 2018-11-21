@@ -22,103 +22,91 @@
 {% endblock flash_messages %}
 
 {% block main %}
-
-    <div class="row">
-        <div class="field-group col-xs-12">
-            <div class="box box-default">
-                <div class="box-body">
-                    {{ form_start(form) }}
-
-                    {{ form_row(form.title) }}
-                    {{ form_row(form.email) }}
-                    {{ form_row(form.sender) }}
-                    {{ form_row(form.emailTemplate) }}
-                    {{ form_row(form.html) }}
-                    {# Check if the form is displayed horizontally (EasyCMS) or vertically #}
-                    <div class="row">
-                        <script type="text/javascript">
-                            // Script to select all text in clicked DOM element.
-                            function selectText(containerid) {
-                                if (document.selection) {
-                                    var range = document.body.createTextRange();
-                                    range.moveToElementText(document.getElementById(containerid));
-                                    range.select();
-                                } else if (window.getSelection) {
-                                    var range = document.createRange();
-                                    range.selectNode(document.getElementById(containerid));
-                                    window.getSelection().removeAllRanges();
-                                    window.getSelection().addRange(range);
-                                }
-                            }
-                        </script>
-                        <div class="{{ symfony4 ? 'col-xs-12' : 'col-sm-10 col-sm-offset-2' }}">
-                            <p>
-                                {# TODO: Support child items #}
-                                {{ 'Available variables'|trans }}:<br/>
-                                {% for key, vars in itemVariables %}
-                                    {% for var in vars %}
-                                        <code id="var-{{ key~loop.index }}" onclick="selectText('var-{{ key~loop.index }}')" class="text-nowrap">{% verbatim %}{{{% endverbatim %} {{ var }} {% verbatim %}}}{% endverbatim %}</code>
-                                    {% endfor %}
-                                {% endfor %}
-                            </p>
-                        </div>
-                    </div>
-                    {{ form_row(form.successText) }}
-
-                    <div class="bg-light row">
-                        <div class="{{ symfony4 ? 'col-xs-12' : 'col-sm-10 col-sm-offset-2' }}">
-                            <h4>{{ 'Advanced Options'|trans }}</h4>
-                        </div>
-                        <div class="col-xs-12">
-                            {{ form_row(form.template) }}
-                        </div>
-                    </div>
-
-                    {{ form_end(form) }}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <h4>{{ 'Form Fields'|trans }}</h4>
-
-    <div class="row">
-        <div class="field-group col-xs-12">
-            <div class="box box-default">
-                <div class="box-body">
-                    <table class="table table-striped">
-                        <tr>
-                            <th>
-                                {{ 'Required'|trans }}
-                            </th>
-                            <th>
-                                {{ 'Label'|trans }}
-                            </th>
-                            <th>
-                                {{ 'Name'|trans }}
-                            </th>
-                            <th>
-                                {{ 'Type'|trans }}
-                            </th>
-                            <th>
-                                {{ 'Actions'|trans }}
-                            </th>
-                        </tr>
-                        {% for item in formAggregate.items %}
-                            {% set level = 0 %}
-                            {% include '@forms/Admin/edit-item.html.twig' %}
-                        {% endfor %}
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div>
-        {% set version = formAggregate.streamVersion %}
-        {% set uuid = formAggregate.uuid %}
-        {% set parent = null %}
-        {% include '@forms/Admin/item-buttons.html.twig' %}
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active"><a href="#fields" aria-controls="fields" role="tab" data-toggle="tab">{{ 'Form Fields'|trans }}</a></li>
+            <li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">{{ 'Form Settings'|trans }}</a></li>
+        </ul>
+        <div class="tab-content box-default box">
+            <div role="tabpanel" class="tab-pane active box-body" id="fields">
+                <table class="table table-striped">
+                    <tr>
+                        <th>
+                            {{ 'Required'|trans }}
+                        </th>
+                        <th>
+                            {{ 'Label'|trans }}
+                        </th>
+                        <th>
+                            {{ 'Name'|trans }}
+                        </th>
+                        <th>
+                            {{ 'Type'|trans }}
+                        </th>
+                        <th>
+                            {{ 'Actions'|trans }}
+                        </th>
+                    </tr>
+                    {% for item in formAggregate.items %}
+                        {% set level = 0 %}
+                        {% include '@forms/Admin/edit-item.html.twig' %}
+                    {% endfor %}
+                </table>
+                <hr/>
+                <div>
+                    {% set version = formAggregate.streamVersion %}
+                    {% set uuid = formAggregate.uuid %}
+                    {% set parent = null %}
+                    {% include '@forms/Admin/item-buttons.html.twig' %}
+                </div>
+            </div>
+            <div role="tabpanel" class="tab-pane box-body" id="settings">
+                {{ form_start(form) }}
+                {{ form_row(form.title) }}
+                {{ form_row(form.email) }}
+                {{ form_row(form.sender) }}
+                {{ form_row(form.emailTemplate) }}
+                {{ form_row(form.html) }}
+                {# Check if the form is displayed horizontally (EasyCMS) or vertically #}
+                <div class="row">
+                    <script type="text/javascript">
+                        // Script to select all text in clicked DOM element.
+                        function selectText(containerid) {
+                            if (document.selection) {
+                                var range = document.body.createTextRange();
+                                range.moveToElementText(document.getElementById(containerid));
+                                range.select();
+                            } else if (window.getSelection) {
+                                var range = document.createRange();
+                                range.selectNode(document.getElementById(containerid));
+                                window.getSelection().removeAllRanges();
+                                window.getSelection().addRange(range);
+                            }
+                        }
+                    </script>
+                    <div class="{{ symfony4 ? 'col-xs-12' : 'col-sm-10 col-sm-offset-2' }}">
+                        <p>
+                            {# TODO: Support child items #}
+                            {{ 'Available variables'|trans }}:<br/>
+                            {% for key, vars in itemVariables %}
+                                {% for var in vars %}
+                                    <code id="var-{{ key~loop.index }}" onclick="selectText('var-{{ key~loop.index }}')" class="text-nowrap">{% verbatim %}{{{% endverbatim %} {{ var }} {% verbatim %}}}{% endverbatim %}</code>
+                                {% endfor %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+                {{ form_row(form.successText) }}
+                <div class="bg-light row">
+                    <div class="{{ symfony4 ? 'col-xs-12' : 'col-sm-10 col-sm-offset-2' }}">
+                        <h4>{{ 'Advanced Options'|trans }}</h4>
+                    </div>
+                    <div class="col-xs-12">
+                        {{ form_row(form.template) }}
+                    </div>
+                </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
     </div>
-
 {% endblock %}

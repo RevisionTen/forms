@@ -60,9 +60,6 @@ final class FormCreateHandler extends FormBaseHandler implements HandlerInterfac
     {
         $payload = $command->getPayload();
 
-        if (0 === $aggregate->getVersion() && isset($payload['title']) && !empty($payload['title'])) {
-            return true;
-        }
         if (0 !== $aggregate->getVersion()) {
             $this->messageBus->dispatch(new Message(
                 'Aggregate already exists',
@@ -72,7 +69,9 @@ final class FormCreateHandler extends FormBaseHandler implements HandlerInterfac
             ));
 
             return false;
-        } else {
+        }
+
+        if (empty($payload['title'])) {
             $this->messageBus->dispatch(new Message(
                 'You must enter a title',
                 CODE_BAD_REQUEST,
@@ -82,5 +81,7 @@ final class FormCreateHandler extends FormBaseHandler implements HandlerInterfac
 
             return false;
         }
+
+        return true;
     }
 }

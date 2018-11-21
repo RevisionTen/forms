@@ -89,7 +89,7 @@ class TextItem extends Item
             $options['constraints'][] = new NotBlank();
         }
 
-        if ((isset($item['min']) && $item['min']) || isset($item['max']) && $item['max']) {
+        if ((isset($item['min']) && $item['min']) || (isset($item['max']) && $item['max'])) {
             $min = $item['min'] ?? 0;
             $max = $item['max'] ?? null;
             $options['constraints'][] = new Length([

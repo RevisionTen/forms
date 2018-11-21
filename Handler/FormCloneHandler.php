@@ -30,10 +30,10 @@ final class FormCloneHandler extends FormBaseHandler implements HandlerInterface
         if ($this->aggregateFactory) {
             // Build original aggregate and use its state as a starting point.
             /** @var Form $originalAggregate */
-            $originalAggregate = $this->aggregateFactory->build($originalUuid, Form::class, intval($originalVersion));
+            $originalAggregate = $this->aggregateFactory->build($originalUuid, Form::class, (int) $originalVersion);
 
             // Override title.
-            $originalAggregate->title = $originalAggregate->title.' duplicate';
+            $originalAggregate->title .= ' duplicate';
 
             // Override aggregate meta info.
             $originalAggregate->setUuid($aggregate->getUuid());
@@ -73,16 +73,6 @@ final class FormCloneHandler extends FormBaseHandler implements HandlerInterface
     {
         $payload = $command->getPayload();
 
-        if (
-            0 === $aggregate->getVersion() &&
-            isset($payload['originalUuid']) &&
-            !empty($payload['originalUuid']) &&
-            isset($payload['originalVersion']) &&
-            !empty($payload['originalVersion'])
-        ) {
-            return true;
-        }
-
         if (0 !== $aggregate->getVersion()) {
             $this->messageBus->dispatch(new Message(
                 'Aggregate already exists',
@@ -92,7 +82,9 @@ final class FormCloneHandler extends FormBaseHandler implements HandlerInterface
             ));
 
             return false;
-        } else {
+        }
+
+        if (empty($payload['originalUuid']) || empty($payload['originalVersion'])) {
             $this->messageBus->dispatch(new Message(
                 'You must provide an original uuid and version',
                 CODE_BAD_REQUEST,
@@ -102,5 +94,7 @@ final class FormCloneHandler extends FormBaseHandler implements HandlerInterface
 
             return false;
         }
+
+        return true;
     }
 }
