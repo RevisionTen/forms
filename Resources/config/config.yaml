@@ -31,14 +31,12 @@ services:
         autowire: true
         public: true
         tags: [form.type]
-    formservice:
-        alias: RevisionTen\Forms\Services\FormService
-        public: true
     RevisionTen\Forms\Services\FormService:
         autowire: true
-        public: true
         arguments:
             $config: '%forms%'
+    RevisionTen\Forms\Services\SenderService:
+        autowire: true
     RevisionTen\Forms\Listener\:
         resource: '../../Listener/*'
         exclude: '../../Listener/{FormBaseListener.php}'

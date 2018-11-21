@@ -67,10 +67,10 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
     {
         $payload = $command->getPayload();
         // The uuid to edit.
-        $uuid = $payload['uuid'];
-        $item = self::getItem($aggregate, $uuid);
+        $uuid = $payload['uuid'] ?? null;
+        $item = \is_string($uuid) ? self::getItem($aggregate, $uuid) : false;
 
-        if (!isset($uuid)) {
+        if (null === $uuid) {
             $this->messageBus->dispatch(new Message(
                 'No uuid to edit is set',
                 CODE_BAD_REQUEST,
@@ -79,7 +79,9 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
             ));
 
             return false;
-        } elseif (!isset($payload['data'])) {
+        }
+
+        if (!isset($payload['data'])) {
             $this->messageBus->dispatch(new Message(
                 'No data set',
                 CODE_BAD_REQUEST,
@@ -88,7 +90,9 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
             ));
 
             return false;
-        } elseif (!$item) {
+        }
+
+        if (!$item) {
             $this->messageBus->dispatch(new Message(
                 'Item with this uuid was not found '.$uuid,
                 CODE_CONFLICT,
@@ -97,8 +101,8 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
             ));
 
             return false;
-        } else {
-            return true;
         }
+
+        return true;
     }
 }

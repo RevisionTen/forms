@@ -25,7 +25,7 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
         $payload = $command->getPayload();
 
         if (isset($payload['data']['name'])) {
-            // Clean the name to only contrain lowercase letters.
+            // Clean the name to only contain lowercase letters.
             $payload['data']['name'] = strtolower(preg_replace('/[^A-Za-z0-9]/', '', $payload['data']['name']));
         }
 
@@ -40,9 +40,9 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
         ];
 
         // Add to items.
-        $parentUuid = isset($payload['parent']) ? $payload['parent'] : null;
+        $parentUuid = $payload['parent'] ?? null;
 
-        if ($parentUuid && is_string($parentUuid)) {
+        if ($parentUuid && \is_string($parentUuid)) {
             // A function that add the new item to the target parent.
             $addItemFunction = function (&$item, &$collection) use ($newItem) {
                 if (!isset($item['items'])) {
@@ -91,7 +91,9 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
             ));
 
             return false;
-        } elseif (!isset($payload['data'])) {
+        }
+
+        if (!isset($payload['data'])) {
             $this->messageBus->dispatch(new Message(
                 'No data set',
                 CODE_BAD_REQUEST,
@@ -100,8 +102,8 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
             ));
 
             return false;
-        } else {
-            return true;
         }
+
+        return true;
     }
 }

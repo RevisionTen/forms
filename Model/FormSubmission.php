@@ -48,6 +48,10 @@ class FormSubmission
 
     /**
      * FormSubmission constructor.
+     *
+     * @param FormRead  $formRead
+     * @param string    $ip
+     * @param \DateTime $expires
      */
     public function __construct(FormRead $formRead, string $ip, \DateTime $expires)
     {

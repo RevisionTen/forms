@@ -44,8 +44,8 @@ class EntityItem extends Item
         foreach ($metaData as $entityMetaData) {
             $namespace = $entityMetaData->namespace;
             $isAppNamespace = 'AppBundle\Entity' === $namespace || 'App\Entity' === $namespace;
-            $isNotComponent = !(strpos($entityMetaData->getName(), 'Component'));
-            if ($entityMetaData->hasField('title') && $isAppNamespace && $isNotComponent) {
+            $isNotComponent = !strpos($entityMetaData->getName(), 'Component');
+            if ($isAppNamespace && $isNotComponent && $entityMetaData->hasField('title')) {
                 $className = str_replace($namespace.'\\', '', $entityMetaData->getName());
                 $entityClasses[$className] = $entityMetaData->getName();
             }

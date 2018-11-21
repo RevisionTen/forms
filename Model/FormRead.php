@@ -132,7 +132,7 @@ class FormRead
      */
     public function __toString(): string
     {
-        return $this->getTitle() ? $this->getTitle() : strval($this->getId());
+        return $this->getTitle() ?: (string) $this->getId();
     }
 
     /**
@@ -190,7 +190,7 @@ class FormRead
      */
     public function getPayload(): array
     {
-        return is_string($this->payload) ? json_decode($this->payload, true) : $this->payload;
+        return \is_string($this->payload) ? json_decode($this->payload, true) : $this->payload;
     }
 
     /**
