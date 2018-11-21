@@ -21,14 +21,11 @@ use RevisionTen\Forms\Handler\FormBaseHandler;
 use RevisionTen\Forms\Interfaces\ItemInterface;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\Forms\Model\FormRead;
-use RevisionTen\Forms\Model\FormSubmission;
 use RevisionTen\Forms\Services\FormService;
-use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -555,41 +552,6 @@ class FormController extends Controller
     }
 
     /**
-     * Check the aggregate for a field with the propertyName boolean
-     * property and return the fields value.
-     *
-     * Example: You have a field with a "replyTo" boolean and want to return
-     * its value when it is set to true.
-     *
-     * Todo: Support child items.
-     *
-     * @param array  $payload
-     * @param array  $data
-     * @param string $propertyName
-     *
-     * @return mixed|null
-     */
-    private function getField(array $payload, array $data, string $propertyName)
-    {
-        $isField = false;
-        $payload = json_decode(json_encode($payload), true);
-        if ($payload['items'] && \is_array($payload['items']) && \count($payload['items']) > 0) {
-            foreach ($payload['items'] as $item) {
-                if (isset($item['data'][$propertyName]) && $item['data'][$propertyName]) {
-                    $isField = $item['data']['name'];
-                }
-            }
-        }
-
-        return $isField ? $data[$isField] : null;
-    }
-
-    /**
-     * TODO: Breakup monster method.
-     *
-     * @param \Swift_Mailer          $mailer
-     * @param \Twig_Environment      $twig
-     * @param EntityManagerInterface $entityManager
      * @param RequestStack           $requestStack
      * @param FormService            $formService
      * @param string                 $formUuid
@@ -598,249 +560,23 @@ class FormController extends Controller
      *
      * @return Response
      */
-    public function renderFormAction(\Swift_Mailer $mailer, \Twig_Environment $twig, EntityManagerInterface $entityManager, RequestStack $requestStack, FormService $formService, string $formUuid, string $template = '@forms/Frontend/form.html.twig', array $defaultData): Response
+    public function renderFormAction(RequestStack $requestStack, FormService $formService, string $formUuid, string $template = '@forms/Frontend/form.html.twig', array $defaultData): Response
     {
-        /**
-         * Get the FormRead entity.
-         *
-         * @var FormRead $formRead
-         */
-        $formRead = $entityManager->getRepository(FormRead::class)->findOneByUuid($formUuid);
-
         $request = $requestStack->getMasterRequest();
-        $ignore_validation = null !== $request && $request->get('ignore_validation');
-        $form = $formService->getForm($formUuid, $defaultData, $ignore_validation);
-        $form->handleRequest($request);
-        $ip = $request->getClientIp();
+        $handledRequest = $formService->handleRequest($request, $formUuid, $defaultData);
 
-        /**
-         * Check for recent submissions by this ip on this form.
-         *
-         * @var FormSubmission[] $formSubmissions
-         */
-        $formSubmissions = $entityManager->getRepository(FormSubmission::class)->findBy([
-            'ip' => $ip,
-            'form' => $formRead->getId(),
-        ], [
-            'created' => Criteria::DESC,
-        ], 1);
-        /** @var FormSubmission $formSubmission */
-        $formSubmission = !empty($formSubmissions) ? array_values($formSubmissions)[0] : null;
-
-        $hasIpBlock = false;
-        if (null !== $formSubmission && time() < $formSubmission->getExpires()->getTimestamp()) {
-            $hasIpBlock = true;
-        }
-
-        $submittedData = [];
-        foreach ($form->all() as $fieldName => $fieldValue) {
-            $submittedData[$fieldName] = $fieldValue->getData();
-        }
-
-        if (!$ignore_validation && $hasIpBlock) {
-            $aggregateData = json_decode(json_encode($formRead->getPayload()), true);
-            $timeLimitMessage = $aggregateData['timeLimitMessage'] ?? $this->get('translator')->trans('You have already submitted the form, please try again later');
-            if ($form->isSubmitted()) {
-                $form->addError(new FormError($timeLimitMessage));
-            } else {
-                $this->addFlash(
-                    'warning',
-                    $timeLimitMessage
-                );
-            }
-        }
-
-        if (!$ignore_validation && !$hasIpBlock && $form->isSubmitted()) {
-
-            $data = array_merge($defaultData, $submittedData);
-            $aggregateData = json_decode(json_encode($formRead->getPayload()), true);
-
-            // Execute onValidate listeners.
-            foreach ($aggregateData['items'] as $item) {
-                $itemClass = $formService->getItemClass($item['itemName']);
-                // Get the form as a service or instantiate it.
-                try {
-                    $itemForm = $this->get($itemClass);
-                } catch (ServiceNotFoundException $exception) {
-                    $itemForm = new $itemClass();
-                }
-
-                if ($itemForm instanceof ItemInterface && !$itemForm->onValidate($data, $item['data'], $formRead, $form)) {
-                    break;
-                }
-            }
-
-            if ($isValid = $form->isValid()) {
-                // Build and send the email.
-                if ($emailTemplate = $formRead->getEmailTemplate()) {
-
-                    // Execute onSubmit listeners.
-                    foreach ($aggregateData['items'] as $item) {
-                        $itemClass = $formService->getItemClass($item['itemName']);
-                        // Get the form as a service or instanciate it.
-                        try {
-                            $itemForm = $this->get($itemClass);
-                        } catch (ServiceNotFoundException $exception) {
-                            $itemForm = new $itemClass();
-                        }
-
-                        if ($itemForm instanceof ItemInterface && !$itemForm->onSubmit($data, $item['data'], $formRead, $form)) {
-                            $isValid = false;
-                            break;
-                        }
-                    }
-
-                    if ($isValid) {
-                        $message = new \Swift_Message();
-
-                        // Get To Email.
-                        $to = $this->getField($aggregateData, $data, 'isReceiver') ?? $formRead->getEmail();
-                        $message->setTo(self::getMailsFromString($to));
-
-                        // Get CC Email.
-                        $cc = $formRead->getEmailCC();
-                        if ($cc) {
-                            $message->setCc(self::getMailsFromString($cc));
-                        }
-
-                        // Get BCC Email.
-                        $bcc = $formRead->getEmailBCC();
-                        if ($bcc) {
-                            $message->setBcc(self::getMailsFromString($bcc));
-                        }
-
-                        // Get ReplyTo Email.
-                        $replyTo = $this->getField($aggregateData, $data, 'replyTo');
-
-                        // Get ReplyTo Name.
-                        $replyToName = null;
-                        $name = $this->getField($aggregateData, $data, 'isName');
-                        $firstname = $this->getField($aggregateData, $data, 'isFirstname');
-                        if ($replyTo && $name && \is_string($name)) {
-                            $replyToName = $name;
-                            if ($firstname && \is_string($firstname)) {
-                                $replyToName = $firstname.' '.$replyToName;
-                            }
-                        }
-
-                        // Set Reply To.
-                        $message->setReplyTo($replyTo, $replyToName);
-
-                        // Set Sender and From.
-                        $message->setSender($formRead->getSender(), $replyToName ?? 'Website');
-                        $message->setFrom($formRead->getSender(), $replyToName ?? 'Website');
-
-                        // Get Subject.
-                        $message->setSubject($this->getField($aggregateData, $data, 'isSubject') ?? $formRead->getTitle());
-
-                        $renderedTemplate = $this->renderEmailTemplate($twig, $emailTemplate, $data);
-
-                        $emailTemplateCopy = $formRead->getEmailTemplateCopy();
-                        $renderedTemplateCopy = false;
-                        if (!empty($emailTemplateCopy)) {
-                            $renderedTemplateCopy = $this->renderEmailTemplate($twig, $emailTemplateCopy, $data);
-                        }
-
-                        // If rendering the twig template fails json_encode the raw form data and send as plain text with error attached.
-                        if (null === $renderedTemplate['body'] && \is_object($renderedTemplate['error']) && method_exists($renderedTemplate['error'], 'getRawMessage')) {
-                            $renderedTemplate['body'] = 'An Error occurred: '.$renderedTemplate['error']->getRawMessage()."\nPlease check your Email-Template at line ".$renderedTemplate['error']->getTemplateLine().". \nHere is the raw form submission:";
-                            $renderedTemplate['body'] .= "\n\n".json_encode($request->request->all());
-                            $formRead->setHtml(false);
-                        }
-                        $message->setBody($renderedTemplate['body'] ?? 'ERROR', $formRead->getHtml() ? 'text/html' : 'text/plain');
-
-                        if ($renderedTemplateCopy) {
-                            // Send different emails to main recipient and copy recipients.
-
-                            $messageMain = clone $message;
-                            $messageMain->setCc(null);
-                            $messageMain->setBcc(null);
-
-                            // Send to main recipient.
-                            $mailer->send($messageMain);
-
-                            // Send copies with different body.
-                            if (null === $renderedTemplateCopy['body'] && \is_object($renderedTemplate['error']) && method_exists($renderedTemplate['error'], 'getRawMessage')) {
-                                $renderedTemplateCopy['body'] = 'An Error occurred: '.$renderedTemplateCopy['error']->getRawMessage()."\nPlease check your Email-Template at line ".$renderedTemplateCopy['error']->getTemplateLine().". \nHere is the raw form submission:";
-                                $renderedTemplateCopy['body'] .= "\n\n".json_encode($request->request->all());
-                                $formRead->setHtml(false);
-                            }
-
-                            $message->setBody($renderedTemplateCopy['body'] ?? 'ERROR', $formRead->getHtml() ? 'text/html' : 'text/plain');
-                            $message->setTo(null);
-
-                            $mailer->send($message);
-
-                        } else {
-                            $mailer->send($message);
-                        }
-
-                        // Display Success Message.
-                        $this->addFlash(
-                            'success',
-                            $formRead->getSuccessText()
-                        );
-
-                        $seconds = $aggregateData['timelimit'] ?? false;
-                        if ($seconds) {
-                            $expiresTimestamp = time() + (int) $seconds;
-                            $expires = new \DateTime();
-                            $expires->setTimestamp($expiresTimestamp);
-                            $formSubmission = new FormSubmission($formRead, $ip, $expires);
-                            $entityManager->persist($formSubmission);
-                            $entityManager->flush();
-                        }
-                    }
-                } else {
-                    $this->addFlash(
-                        'danger',
-                        $this->get('translator')->trans('An Error occurred.')
-                    );
-                }
-            }
+        foreach ($handledRequest['messages'] as $message) {
+            $this->addFlash(
+                $message['type'],
+                $message['message']
+            );
         }
 
         return $this->render($template, [
-            'form' => $form->createView(),
+            'form' => $handledRequest['formView'],
             'request' => $request,
-            'ignore_validation' => $ignore_validation,
+            'ignore_validation' => $handledRequest['ignore_validation'],
         ]);
-    }
-
-    private function renderEmailTemplate(\Twig_Environment $twig, string $emailTemplate, $data): ?array
-    {
-        // Try to render the twig template.
-        $body = null;
-        $e = null;
-        try {
-            $view = $twig->createTemplate($emailTemplate);
-            try {
-                $body = $view->render($data);
-            } catch (\Twig_Error_Runtime $e) {
-                $body = null;
-            } catch (\Throwable $e) {
-                $body = null;
-            }
-        } catch (\Twig_Error_Syntax $e) {
-            $body = null;
-        } catch (\Twig_Error_Loader $e) {
-            $body = null;
-        }
-
-        return [
-            'body' => $body,
-            'error' => $e,
-        ];
-    }
-
-    /**
-     * @param string $mails
-     *
-     * @return array
-     */
-    private static function getMailsFromString(string $mails): array
-    {
-        return array_map('trim', explode(',', $mails));
     }
 
     /**
