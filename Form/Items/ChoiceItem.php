@@ -81,7 +81,7 @@ class ChoiceItem extends Item
             if (false !== strpos($line, '|')) {
                 [$key, $label] = explode('|', $line);
             } else {
-                $label =$line;
+                $label = $line;
                 $key = $line;
             }
 
