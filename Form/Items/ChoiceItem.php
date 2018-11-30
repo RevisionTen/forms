@@ -76,24 +76,23 @@ class ChoiceItem extends Item
         $choices = explode("\n", $item['choices']);
 
         // TODO: array map.
+        $parsedChoices = [];
         foreach ($choices as $key => $line) {
-            unset($choices[$key]);
-
             if (false !== strpos($line, '|')) {
                 [$key, $label] = explode('|', $line);
             } else {
-                $label = $line;
+                $label =$line;
                 $key = $line;
             }
 
-            $choices[trim($label)] = trim($key);
+            $parsedChoices[trim((string) $label)] = trim((string) $key);
         }
 
         $options = [
             'label' => $item['label'] ?? false,
             'required' => $item['required'] ?? false,
             'attr' => $attributes,
-            'choices' => $choices,
+            'choices' => $parsedChoices,
             'expanded' => $item['expanded'] ?? false,
             'multiple' => $item['multiple'] ?? false,
             'placeholder' => $item['placeholder'] ?? $item['label'],
