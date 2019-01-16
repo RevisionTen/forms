@@ -47,6 +47,9 @@ final class Form extends Aggregate
     /** @var string */
     public $successText;
 
+    /** @var bool */
+    public $saveSubmissions;
+
     /** @var array */
     public $items;
 }

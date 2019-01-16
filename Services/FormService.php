@@ -123,6 +123,7 @@ class FormService
         $formRead->setDeleted($aggregate->deleted);
         $formRead->setHtml($aggregate->html);
         $formRead->setSuccessText($aggregate->successText);
+        $formRead->setSaveSubmissions($aggregate->saveSubmissions);
         $formRead->setCreated($aggregate->getCreated());
         $formRead->setModified($aggregate->getModified());
 
@@ -325,9 +326,9 @@ class FormService
                 ];
 
                 // Save submission in submission table.
-                $timelimit = $aggregateData['timelimit'] ?? false;
-                if ($timelimit) {
-                    $this->saveFormSubmission((int) $timelimit, $ip, $formRead);
+                $timelimit = $aggregateData['timelimit'] ?? 0;
+                if ($timelimit || $formRead->getSaveSubmissions()) {
+                    $this->saveFormSubmission((int) $timelimit, $ip, $formRead, $data);
                 }
             }
         }
@@ -383,12 +384,12 @@ class FormService
         return true;
     }
 
-    private function saveFormSubmission(int $timelimit, string $ip, FormRead $formRead): void
+    private function saveFormSubmission(int $timelimit, string $ip, FormRead $formRead, array $submittedData): void
     {
         $expiresTimestamp = time() + $timelimit;
         $expires = new \DateTime();
         $expires->setTimestamp($expiresTimestamp);
-        $formSubmission = new FormSubmission($formRead, $ip, $expires);
+        $formSubmission = new FormSubmission($formRead, $ip, $expires, $submittedData);
         $this->entityManager->persist($formSubmission);
         $this->entityManager->flush();
     }
@@ -466,5 +467,20 @@ class FormService
         }
 
         return $isField ? $data[$isField] : null;
+    }
+
+    public function getFormSubmissions(int $id)
+    {
+        /** @var FormSubmission[] $formSubmissions */
+        $formSubmissions = $this->entityManager->getRepository(FormSubmission::class)->findBy([
+            'form' => $id,
+        ]);
+
+        $payloads = array_map(function ($formSubmission) {
+            /** @var FormSubmission $formSubmission */
+            return $formSubmission->getPayload();
+        }, $formSubmissions);
+
+        return $payloads;
     }
 }

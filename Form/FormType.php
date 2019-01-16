@@ -119,6 +119,11 @@ class FormType extends AbstractType
             ],
         ]);
 
+        $builder->add('saveSubmissions', CheckboxType::class, [
+            'label' => 'Save submissions',
+            'required' => false,
+        ]);
+
         $builder->add('save', SubmitType::class, [
             'label' => 'Save',
         ]);

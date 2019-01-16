@@ -47,18 +47,29 @@ class FormSubmission
     private $form;
 
     /**
+     * TODO: Switch to json once https://github.com/doctrine/doctrine2/pull/6988 is fixed.
+     *
+     * @var array
+     *
+     * @ORM\Column(type="text", nullable=true)
+     */
+    private $payload;
+
+    /**
      * FormSubmission constructor.
      *
      * @param FormRead  $formRead
      * @param string    $ip
      * @param \DateTime $expires
+     * @param array     $payload
      */
-    public function __construct(FormRead $formRead, string $ip, \DateTime $expires)
+    public function __construct(FormRead $formRead, string $ip, \DateTime $expires, array $payload)
     {
         $this->created = new \DateTime();
         $this->form = $formRead;
         $this->ip = $ip;
         $this->expires = $expires;
+        $this->payload = json_encode($payload);
     }
 
     /**
@@ -157,6 +168,30 @@ class FormSubmission
     public function setForm(FormRead $form): FormSubmission
     {
         $this->form = $form;
+
+        return $this;
+    }
+
+    /**
+     * TODO: simplify method once https://github.com/doctrine/doctrine2/pull/6988 is fixed.
+     *
+     * @return array|null
+     */
+    public function getPayload(): ?array
+    {
+        return \is_string($this->payload) ? json_decode($this->payload, true) : $this->payload;
+    }
+
+    /**
+     * TODO: simplify method once https://github.com/doctrine/doctrine2/pull/6988 is fixed.
+     *
+     * @param array $payload
+     *
+     * @return FormSubmission
+     */
+    public function setPayload($payload): self
+    {
+        $this->payload = json_encode($payload);
 
         return $this;
     }

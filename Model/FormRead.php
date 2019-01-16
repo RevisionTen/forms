@@ -116,6 +116,12 @@ class FormRead
     private $successText;
 
     /**
+     * @var bool
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $saveSubmissions;
+
+    /**
      * @var \DateTime
      * @ORM\Column(type="datetime")
      */
@@ -423,6 +429,25 @@ class FormRead
     public function setSuccessText(string $successText): self
     {
         $this->successText = $successText;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getSaveSubmissions(): bool
+    {
+        return (bool) $this->saveSubmissions;
+    }
+
+    /**
+     * @param bool $saveSubmissions
+     * @return FormRead
+     */
+    public function setSaveSubmissions(bool $saveSubmissions): self
+    {
+        $this->saveSubmissions = $saveSubmissions;
 
         return $this;
     }

@@ -35,6 +35,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 
 /**
@@ -629,5 +630,31 @@ class FormController extends Controller
         }
 
         return $this->errorResponse($aggregateUuid, $messageBus);
+    }
+
+    /**
+     * @Route("/submissions", name="forms_submissions")
+     * 
+     * @param FormService         $formService
+     * @param SerializerInterface $serializer
+     * @param Request             $request
+     *
+     * @return Response
+     */
+    public function submissions(FormService $formService, SerializerInterface $serializer, Request $request)
+    {
+        /** @var int $id FormRead Id. */
+        $id = (int) $request->get('id');
+
+        $submissions = $formService->getFormSubmissions($id);
+
+        $submissionsCsv = $serializer->encode($submissions, 'csv');
+
+        $response = new Response($submissionsCsv);
+
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="submissions.csv"');
+
+        return $response;
     }
 }
