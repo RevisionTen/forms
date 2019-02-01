@@ -442,12 +442,12 @@ class FormRead
     }
 
     /**
-     * @param bool $saveSubmissions
+     * @param bool|null $saveSubmissions
      * @return FormRead
      */
-    public function setSaveSubmissions(bool $saveSubmissions): self
+    public function setSaveSubmissions(?bool $saveSubmissions): self
     {
-        $this->saveSubmissions = $saveSubmissions;
+        $this->saveSubmissions = (bool) $saveSubmissions;
 
         return $this;
     }
