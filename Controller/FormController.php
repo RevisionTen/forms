@@ -25,7 +25,7 @@ use RevisionTen\Forms\Services\FormService;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -43,7 +43,7 @@ use Symfony\Component\Translation\TranslatorInterface;
  *
  * @Route("/admin/forms")
  */
-class FormController extends Controller
+class FormController extends AbstractController
 {
     /**
      * TODO: Put this in a cqrs helper bundle.
@@ -634,7 +634,7 @@ class FormController extends Controller
 
     /**
      * @Route("/submissions", name="forms_submissions")
-     * 
+     *
      * @param FormService         $formService
      * @param SerializerInterface $serializer
      * @param Request             $request
