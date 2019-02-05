@@ -334,6 +334,7 @@ class FormService
         }
 
         return [
+            'template' => $formRead->getTemplate(),
             'ignore_validation' => $ignore_validation,
             'formView' => $form->createView(),
             'messages' => $messages,

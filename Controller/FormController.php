@@ -22,7 +22,6 @@ use RevisionTen\Forms\Interfaces\ItemInterface;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\Forms\Model\FormRead;
 use RevisionTen\Forms\Services\FormService;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -45,6 +44,41 @@ use Symfony\Component\Translation\TranslatorInterface;
  */
 class FormController extends AbstractController
 {
+    /** @var MessageBus */
+    private $messageBus;
+
+    /** @var CommandBus */
+    private $commandBus;
+
+    /** @var AggregateFactory */
+    private $aggregateFactory;
+
+    /** @var EntityManagerInterface */
+    private $entityManager;
+
+    /** @var FormService */
+    private $formService;
+
+    /** @var TranslatorInterface */
+    private $translator;
+
+    public function __construct(
+        MessageBus $messageBus,
+        CommandBus $commandBus,
+        AggregateFactory $aggregateFactory,
+        EntityManagerInterface $entityManager,
+        FormService $formService,
+        TranslatorInterface $translator
+    )
+    {
+        $this->messageBus = $messageBus;
+        $this->commandBus = $commandBus;
+        $this->aggregateFactory = $aggregateFactory;
+        $this->entityManager = $entityManager;
+        $this->formService = $formService;
+        $this->translator = $translator;
+    }
+
     /**
      * TODO: Put this in a cqrs helper bundle.
      * Returns the difference between base array and change array.
@@ -91,13 +125,12 @@ class FormController extends AbstractController
      * Returns info from the messageBus.
      *
      * @param string|NULL $formUuid
-     * @param MessageBus  $messageBus
      *
      * @return JsonResponse|RedirectResponse|Response
      */
-    public function errorResponse(string $formUuid = null, MessageBus $messageBus)
+    public function errorResponse(string $formUuid = null)
     {
-        $messages = $messageBus->getMessagesJson();
+        $messages = $this->messageBus->getMessagesJson();
 
         if ($formUuid) {
             foreach ($messages as $message) {
@@ -122,10 +155,10 @@ class FormController extends AbstractController
      */
     private function redirectToForm(string $formUuid): Response
     {
-        /** @var EntityManager $em */
-        $em = $this->getDoctrine()->getManager();
         /** @var FormRead|null $formRead */
-        $formRead = $em->getRepository(FormRead::class)->findOneByUuid($formUuid);
+        $formRead = $this->entityManager->getRepository(FormRead::class)->findOneBy([
+            'uuid' => $formUuid,
+        ]);
 
         if ($formRead) {
             return $this->redirectToRoute('forms_edit_aggregate', [
@@ -141,13 +174,12 @@ class FormController extends AbstractController
      *
      * @Route("/create-form", name="forms_create_form")
      *
-     * @param Request    $request
-     * @param CommandBus $commandBus
-     * @param MessageBus $messageBus
+     * @param Request $request
      *
      * @return JsonResponse|RedirectResponse|Response
+     * @throws \Exception
      */
-    public function createFormAggregate(Request $request, CommandBus $commandBus, MessageBus $messageBus)
+    public function createFormAggregate(Request $request)
     {
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
@@ -161,7 +193,7 @@ class FormController extends AbstractController
 
             // Execute Command.
             $success = false;
-            $commandBus->dispatch(new FormCreateCommand($user->getId(), Uuid::uuid1()->toString(), $aggregateUuid, 0, $data, function ($commandBus, $event) use (&$success) {
+            $this->commandBus->dispatch(new FormCreateCommand($user->getId(), Uuid::uuid1()->toString(), $aggregateUuid, 0, $data, function ($commandBus, $event) use (&$success) {
                 // Callback.
                 $success = true;
             }));
@@ -175,7 +207,7 @@ class FormController extends AbstractController
                 return $this->redirectToForm($aggregateUuid);
             }
 
-            return $this->errorResponse($aggregateUuid, $messageBus);
+            return $this->errorResponse($aggregateUuid);
         }
 
         return $this->render('@forms/Form/form.html.twig', [
@@ -187,22 +219,19 @@ class FormController extends AbstractController
     /**
      * @Route("/delete-aggregate", name="forms_delete_aggregate")
      *
-     * @param Request                $request
-     * @param CommandBus             $commandBus
-     * @param MessageBus             $messageBus
-     * @param AggregateFactory       $aggregateFactory
-     * @param EntityManagerInterface $em
+     * @param Request $request
      *
      * @return Response
+     * @throws \Exception
      */
-    public function deleteAggregateAction(Request $request, CommandBus $commandBus, MessageBus $messageBus, AggregateFactory $aggregateFactory, EntityManagerInterface $em): Response
+    public function deleteAggregateAction(Request $request): Response
     {
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
         /** @var int $id FormRead Id. */
         $id = $request->get('id');
         /** @var FormRead $formRead */
-        $formRead = $em->getRepository(FormRead::class)->find($id);
+        $formRead = $this->entityManager->getRepository(FormRead::class)->find($id);
 
         if (null === $formRead) {
             return $this->redirect('/admin');
@@ -210,38 +239,34 @@ class FormController extends AbstractController
 
         $formUuid = $formRead->getUuid();
         /** @var Form $formAggregate */
-        $formAggregate = $aggregateFactory->build($formUuid, Form::class, null, $user->getId());
+        $formAggregate = $this->aggregateFactory->build($formUuid, Form::class, null, $user->getId());
 
         // Execute Command.
         $success = false;
-        $commandBus->dispatch(new FormDeleteCommand($user->getId(), Uuid::uuid1()->toString(), $formAggregate->getUuid(), $formAggregate->getStreamVersion(), [], function ($commandBus, $event) use (&$success) {
+        $this->commandBus->dispatch(new FormDeleteCommand($user->getId(), Uuid::uuid1()->toString(), $formAggregate->getUuid(), $formAggregate->getStreamVersion(), [], function ($commandBus, $event) use (&$success) {
             // Callback.
             $success = true;
         }));
 
-        return $success ? $this->redirect('/admin/?entity=FormRead&action=list') : $this->errorResponse($formAggregate->getUuid(), $messageBus);
+        return $success ? $this->redirect('/admin/?entity=FormRead&action=list') : $this->errorResponse($formAggregate->getUuid());
     }
 
     /**
      * @Route("/edit-aggregate", name="forms_edit_aggregate")
      *
-     * @param Request                $request
-     * @param CommandBus             $commandBus
-     * @param MessageBus             $messageBus
-     * @param AggregateFactory       $aggregateFactory
-     * @param FormService            $formService
-     * @param EntityManagerInterface $em
+     * @param Request $request
      *
      * @return Response
+     * @throws \Exception
      */
-    public function editAggregateAction(Request $request, CommandBus $commandBus, MessageBus $messageBus, AggregateFactory $aggregateFactory, FormService $formService, EntityManagerInterface $em): Response
+    public function editAggregateAction(Request $request): Response
     {
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
         /** @var int $id FormRead Id. */
         $id = $request->get('id');
         /** @var FormRead $formRead */
-        $formRead = $em->getRepository(FormRead::class)->find($id);
+        $formRead = $this->entityManager->getRepository(FormRead::class)->find($id);
 
         if (null === $formRead) {
             return $this->redirect('/admin');
@@ -249,7 +274,7 @@ class FormController extends AbstractController
 
         $formUuid = $formRead->getUuid();
         /** @var Form $formAggregate */
-        $formAggregate = $aggregateFactory->build($formUuid, Form::class, null, $user->getId());
+        $formAggregate = $this->aggregateFactory->build($formUuid, Form::class, null, $user->getId());
         // Convert Aggregate to data array for form and remove properties we don't want changed.
         $aggregateData = json_decode(json_encode($formAggregate), true);
 
@@ -258,7 +283,7 @@ class FormController extends AbstractController
         if (isset($aggregateData['items']) && \is_array($aggregateData['items']) && \count($aggregateData['items']) > 0) {
             foreach ($aggregateData['items'] as $item) {
                 /** @var ItemInterface $itemType */
-                $itemType = $formService->getItemClass($item['itemName']);
+                $itemType = $this->formService->getItemClass($item['itemName']);
                 $itemVariables[] = $itemType::getVariables($item['data']);
             }
         }
@@ -275,7 +300,7 @@ class FormController extends AbstractController
 
             // Execute Command.
             $success = false;
-            $commandBus->dispatch(new FormEditCommand($user->getId(), Uuid::uuid1()->toString(), $formAggregate->getUuid(), $formAggregate->getStreamVersion(), $data, function ($commandBus, $event) use (&$success) {
+            $this->commandBus->dispatch(new FormEditCommand($user->getId(), Uuid::uuid1()->toString(), $formAggregate->getUuid(), $formAggregate->getStreamVersion(), $data, function ($commandBus, $event) use (&$success) {
                 // Callback.
                 $success = true;
             }));
@@ -289,7 +314,7 @@ class FormController extends AbstractController
                 return $this->redirectToForm($formUuid);
             }
 
-            return $this->errorResponse($formAggregate->getUuid(), $messageBus);
+            return $this->errorResponse($formAggregate->getUuid());
         }
 
         if (class_exists('\Symfony\Component\HttpKernel\Kernel') && \defined('\Symfony\Component\HttpKernel\Kernel::MAJOR_VERSION')) {
@@ -310,17 +335,16 @@ class FormController extends AbstractController
     }
 
     /**
-     * @param FormService $formService
-     * @param string      $itemName
-     * @param array|null  $data
-     * @param array|null  $items
+     * @param string     $itemName
+     * @param array|null $data
+     * @param array|null $items
      *
      * @return FormInterface
      */
-    private function getItemForm(FormService $formService, string $itemName, array $data = null, array $items = null): FormInterface
+    private function getItemForm(string $itemName, array $data = null, array $items = null): FormInterface
     {
         $data = $data ?? ['data' => []];
-        $formClass = $formService->getItemClass($itemName);
+        $formClass = $this->formService->getItemClass($itemName);
 
         return $this->createForm(ItemType::class, $data, [
             'formClass' => $formClass,
@@ -331,28 +355,24 @@ class FormController extends AbstractController
     /**
      * @Route("/add-item/{formUuid}/{onVersion}/{itemName}/{parent}", name="forms_add_item")
      *
-     * @param Request             $request
-     * @param CommandBus          $commandBus
-     * @param MessageBus          $messageBus
-     * @param AggregateFactory    $aggregateFactory
-     * @param FormService         $formService
-     * @param TranslatorInterface $translator
-     * @param string              $formUuid
-     * @param int                 $onVersion
-     * @param string|null         $parent
-     * @param string              $itemName
+     * @param Request     $request
+     * @param string      $formUuid
+     * @param int         $onVersion
+     * @param string|null $parent
+     * @param string      $itemName
      *
+     * @throws \Exception
      * @return Response
      */
-    public function formAddItem(Request $request, CommandBus $commandBus, MessageBus $messageBus, AggregateFactory $aggregateFactory, FormService $formService, TranslatorInterface $translator, string $formUuid, int $onVersion, string $parent = null, string $itemName): Response
+    public function formAddItem(Request $request, string $formUuid, int $onVersion, string $parent = null, string $itemName): Response
     {
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
         /** @var Form $aggregate */
-        $aggregate = $aggregateFactory->build($formUuid, Form::class, $onVersion, $user->getId());
+        $aggregate = $this->aggregateFactory->build($formUuid, Form::class, $onVersion, $user->getId());
 
-        $form = $this->getItemForm($formService, $itemName, null, $aggregate->items);
+        $form = $this->getItemForm($itemName, null, $aggregate->items);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -360,7 +380,7 @@ class FormController extends AbstractController
 
             // Execute Command.
             $success = false;
-            $commandBus->dispatch(new FormAddItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
+            $this->commandBus->dispatch(new FormAddItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
                 'itemName' => $itemName,
                 'data' => $data,
                 'parent' => $parent,
@@ -378,11 +398,11 @@ class FormController extends AbstractController
                 return $this->redirectToForm($formUuid);
             }
 
-            return $this->errorResponse($formUuid, $messageBus);
+            return $this->errorResponse($formUuid);
         }
 
-        $itemNameTranslated = $translator->trans($itemName);
-        $title = $translator->trans('Add %itemName% field', ['%itemName%' => $itemNameTranslated]);
+        $itemNameTranslated = $this->translator->trans($itemName);
+        $title = $this->translator->trans('Add %itemName% field', ['%itemName%' => $itemNameTranslated]);
 
         return $this->render('@forms/Form/form.html.twig', [
             'title' => $title,
@@ -393,25 +413,21 @@ class FormController extends AbstractController
     /**
      * @Route("/edit-item/{formUuid}/{onVersion}/{itemUuid}", name="forms_edit_item")
      *
-     * @param Request             $request
-     * @param CommandBus          $commandBus
-     * @param MessageBus          $messageBus
-     * @param AggregateFactory    $aggregateFactory
-     * @param FormService         $formService
-     * @param TranslatorInterface $translator
-     * @param string              $formUuid
-     * @param int                 $onVersion
-     * @param string              $itemUuid
+     * @param Request $request
+     * @param string  $formUuid
+     * @param int     $onVersion
+     * @param string  $itemUuid
      *
+     * @throws \Exception
      * @return Response
      */
-    public function formEditItem(Request $request, CommandBus $commandBus, MessageBus $messageBus, AggregateFactory $aggregateFactory, FormService $formService, TranslatorInterface $translator, string $formUuid, int $onVersion, string $itemUuid): Response
+    public function formEditItem(Request $request, string $formUuid, int $onVersion, string $itemUuid): Response
     {
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
         /** @var Form $aggregate */
-        $aggregate = $aggregateFactory->build($formUuid, Form::class, $onVersion, $user->getId());
+        $aggregate = $this->aggregateFactory->build($formUuid, Form::class, $onVersion, $user->getId());
 
         if (empty($aggregate->items)) {
             // Aggregate does not exist, or is empty.
@@ -422,12 +438,12 @@ class FormController extends AbstractController
         $item = FormBaseHandler::getItem($aggregate, $itemUuid);
 
         // Get the form title.
-        $title = $translator->trans('Edit %itemName% field', [
-            '%itemName%' => $translator->trans($item['itemName'] ?? 'Form'),
+        $title = $this->translator->trans('Edit %itemName% field', [
+            '%itemName%' => $this->translator->trans($item['itemName'] ?? 'Form'),
         ]);
 
         if ($item && isset($item['data'], $item['itemName'])) {
-            $form = $this->getItemForm($formService, $item['itemName'], $item, $aggregate->items);
+            $form = $this->getItemForm($item['itemName'], $item, $aggregate->items);
             $form->handleRequest($request);
 
             if ($form->isSubmitted()) {
@@ -436,13 +452,13 @@ class FormController extends AbstractController
                 // Remove data that hasn't changed.
                 $data = $this->diff($item['data'], $data);
                 if (empty($data)) {
-                    $form->addError(new FormError($translator->trans('Data has not changed.')));
+                    $form->addError(new FormError($this->translator->trans('Data has not changed.')));
                 }
 
                 if ($form->isValid()) {
                     // Execute Command.
                     $success = false;
-                    $commandBus->dispatch(new FormEditItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
+                    $this->commandBus->dispatch(new FormEditItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
                         'uuid' => $itemUuid,
                         'data' => $data,
                     ], function ($commandBus, $event) use (&$success) {
@@ -453,17 +469,17 @@ class FormController extends AbstractController
                     if ($success) {
                         $this->addFlash(
                             'success',
-                            $translator->trans('Field edited')
+                            $this->translator->trans('Field edited')
                         );
 
                         return $this->redirectToForm($formUuid);
                     }
 
-                    return $this->errorResponse($formUuid, $messageBus);
+                    return $this->errorResponse($formUuid);
                 }
             }
         } else {
-            return $this->errorResponse($formUuid, $messageBus);
+            return $this->errorResponse($formUuid);
         }
 
         return $this->render('@forms/Form/form.html.twig', [
@@ -477,22 +493,20 @@ class FormController extends AbstractController
      *
      * @Route("/remove-item/{formUuid}/{onVersion}/{itemUuid}", name="forms_remove_item")
      *
-     * @param CommandBus          $commandBus
-     * @param MessageBus          $messageBus
-     * @param TranslatorInterface $translator
-     * @param string              $formUuid
-     * @param int                 $onVersion
-     * @param string              $itemUuid
+     * @param string $formUuid
+     * @param int    $onVersion
+     * @param string $itemUuid
      *
+     * @throws \Exception
      * @return JsonResponse|Response
      */
-    public function formRemoveItem(CommandBus $commandBus, MessageBus $messageBus, TranslatorInterface $translator, string $formUuid, int $onVersion, string $itemUuid)
+    public function formRemoveItem(string $formUuid, int $onVersion, string $itemUuid)
     {
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
         $success = false;
-        $commandBus->dispatch(new FormRemoveItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
+        $this->commandBus->dispatch(new FormRemoveItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
             'uuid' => $itemUuid,
         ], function ($commandBus, $event) use (&$success) {
             // Callback.
@@ -502,13 +516,13 @@ class FormController extends AbstractController
         if ($success) {
             $this->addFlash(
                 'success',
-                $translator->trans('Field deleted')
+                $this->translator->trans('Field deleted')
             );
 
             return $this->redirectToForm($formUuid);
         }
 
-        return $this->errorResponse($formUuid, $messageBus);
+        return $this->errorResponse($formUuid);
     }
 
     /**
@@ -516,23 +530,21 @@ class FormController extends AbstractController
      *
      * @Route("/shift-item/{formUuid}/{onVersion}/{itemUuid}/{direction}", name="forms_shift_item")
      *
-     * @param CommandBus          $commandBus
-     * @param MessageBus          $messageBus
-     * @param TranslatorInterface $translator
-     * @param string              $formUuid
-     * @param int                 $onVersion
-     * @param string              $itemUuid
-     * @param string              $direction
+     * @param string $formUuid
+     * @param int    $onVersion
+     * @param string $itemUuid
+     * @param string $direction
      *
-     * @return JsonResponse|Response
+     * @throws \Exception
+     * @return JsonResponse|RedirectResponse|Response
      */
-    public function formShiftItem(CommandBus $commandBus, MessageBus $messageBus, TranslatorInterface $translator, string $formUuid, int $onVersion, string $itemUuid, string $direction)
+    public function formShiftItem(string $formUuid, int $onVersion, string $itemUuid, string $direction)
     {
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
         $success = false;
-        $commandBus->dispatch(new FormShiftItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
+        $this->commandBus->dispatch(new FormShiftItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
             'uuid' => $itemUuid,
             'direction' => $direction,
         ], function ($commandBus, $event) use (&$success) {
@@ -543,28 +555,31 @@ class FormController extends AbstractController
         if ($success) {
             $this->addFlash(
                 'success',
-                $translator->trans('Field shifted')
+                $this->translator->trans('Field shifted')
             );
 
             return $this->redirectToForm($formUuid);
         }
 
-        return $this->errorResponse($formUuid, $messageBus);
+        return $this->errorResponse($formUuid);
     }
 
     /**
      * @param RequestStack           $requestStack
-     * @param FormService            $formService
      * @param string                 $formUuid
-     * @param string                 $template
+     * @param string|null            $template
      * @param array                  $defaultData
      *
      * @return Response
      */
-    public function renderFormAction(RequestStack $requestStack, FormService $formService, string $formUuid, string $template = '@forms/Frontend/form.html.twig', array $defaultData): Response
+    public function renderFormAction(RequestStack $requestStack, string $formUuid, string $template = null, array $defaultData): Response
     {
         $request = $requestStack->getMasterRequest();
-        $handledRequest = $formService->handleRequest($request, $formUuid, $defaultData);
+        $handledRequest = $this->formService->handleRequest($request, $formUuid, $defaultData);
+
+        // Get the forms template.
+        $baseTemplate = $handledRequest['template'] ?? '@forms/Frontend/form.html.twig';
+        $template = $template ?: $baseTemplate;
 
         foreach ($handledRequest['messages'] as $message) {
             $this->addFlash(
@@ -583,22 +598,19 @@ class FormController extends AbstractController
     /**
      * @Route("/clone-aggregate", name="forms_clone_aggregate")
      *
-     * @param Request                $request
-     * @param CommandBus             $commandBus
-     * @param MessageBus             $messageBus
-     * @param EntityManagerInterface $em
-     * @param TranslatorInterface    $translator
+     * @param Request $request
      *
+     * @throws \Exception
      * @return Response
      */
-    public function cloneAggregateAction(Request $request, CommandBus $commandBus, MessageBus $messageBus, EntityManagerInterface $em, TranslatorInterface $translator): Response
+    public function cloneAggregateAction(Request $request): Response
     {
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
         /** @var int $id FormRead Id. */
         $id = $request->get('id');
         /** @var FormRead $formRead */
-        $formRead = $em->getRepository(FormRead::class)->find($id);
+        $formRead = $this->entityManager->getRepository(FormRead::class)->find($id);
 
         if (null === $formRead) {
             return $this->redirect('/admin');
@@ -615,7 +627,7 @@ class FormController extends AbstractController
 
         // Execute Command.
         $success = false;
-        $commandBus->dispatch(new FormCloneCommand($user->getId(), Uuid::uuid1()->toString(), $aggregateUuid, 0, $data, function ($commandBus, $event) use (&$success) {
+        $this->commandBus->dispatch(new FormCloneCommand($user->getId(), Uuid::uuid1()->toString(), $aggregateUuid, 0, $data, function ($commandBus, $event) use (&$success) {
             // Callback.
             $success = true;
         }));
@@ -623,30 +635,29 @@ class FormController extends AbstractController
         if ($success) {
             $this->addFlash(
                 'success',
-                $translator->trans('Form duplicated')
+                $this->translator->trans('Form duplicated')
             );
 
             return $this->redirectToForm($aggregateUuid);
         }
 
-        return $this->errorResponse($aggregateUuid, $messageBus);
+        return $this->errorResponse($aggregateUuid);
     }
 
     /**
      * @Route("/submissions", name="forms_submissions")
      *
-     * @param FormService         $formService
      * @param SerializerInterface $serializer
      * @param Request             $request
      *
      * @return Response
      */
-    public function submissions(FormService $formService, SerializerInterface $serializer, Request $request)
+    public function submissions(SerializerInterface $serializer, Request $request): Response
     {
         /** @var int $id FormRead Id. */
         $id = (int) $request->get('id');
 
-        $submissions = $formService->getFormSubmissions($id);
+        $submissions = $this->formService->getFormSubmissions($id);
 
         $submissionsCsv = $serializer->encode($submissions, 'csv');
 

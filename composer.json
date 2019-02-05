@@ -12,6 +12,7 @@
     ],
     "require": {
         "php": "^7.1",
+        "ext-json": "*",
         "revision-ten/cqrs": "^1.0.0"
     },
     "autoload": {

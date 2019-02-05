@@ -21,11 +21,9 @@ doctrine:
                 is_bundle: true
 
 services:
-    RevisionTen\Forms\Controller\:
+    RevisionTen\Forms\Controller\FormController:
         autowire: true
         autoconfigure: true
-        resource: '../../Controller'
-        tags: ['controller.service_arguments']
     RevisionTen\Forms\Form\Items\EntityItem:
         autoconfigure: true
         autowire: true
