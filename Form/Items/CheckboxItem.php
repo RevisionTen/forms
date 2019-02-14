@@ -17,6 +17,7 @@ class CheckboxItem extends Item
     {
         parent::buildForm($builder, $options);
 
+        $builder->remove('hideLabel');
         $builder->remove('popover');
     }
 
@@ -47,6 +48,9 @@ class CheckboxItem extends Item
             'label' => $item['label'],
             'required' => $item['required'],
             'attr' => $attributes,
+            'label_attr' => [
+                'class' => 'checkbox-custom',
+            ],
         ];
 
         if ($item['required']) {

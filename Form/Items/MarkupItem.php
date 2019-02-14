@@ -19,7 +19,8 @@ class MarkupItem extends Item
 
         $builder->remove('read_only');
         $builder->remove('required');
-        
+        $builder->remove('hideLabel');
+
         if (class_exists('\Ivory\CKEditorBundle\Form\Type\CKEditorType')) {
             $textAreaType = \Ivory\CKEditorBundle\Form\Type\CKEditorType::class;
         } else {

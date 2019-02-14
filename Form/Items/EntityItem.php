@@ -104,7 +104,7 @@ class EntityItem extends Item
         $entityClass = $item['entity_class'];
 
         $options = [
-            'label' => $item['label'],
+            'label' => !empty($item['hideLabel']) && $item['hideLabel'] ? false : $item['label'],
             'required' => $item['required'],
             'attr' => $attributes,
             'expanded' => $item['expanded'] ?? false,

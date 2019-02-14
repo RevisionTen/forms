@@ -79,7 +79,7 @@ class TextItem extends Item
         }
 
         $options = [
-            'label' => $item['label'],
+            'label' => !empty($item['hideLabel']) && $item['hideLabel'] ? false : $item['label'],
             'required' => $item['required'] ?? false,
             'attr' => $attributes,
             'constraints' => [],

@@ -55,6 +55,11 @@ class Item extends AbstractType implements ItemInterface
             'required' => false,
         ]);
 
+        $builder->add('hideLabel', CheckboxType::class, [
+            'label' => 'Hide Label',
+            'required' => false,
+        ]);
+
         if (class_exists('\Ivory\CKEditorBundle\Form\Type\CKEditorType')) {
             $textAreaType = \Ivory\CKEditorBundle\Form\Type\CKEditorType::class;
         } else {
@@ -95,7 +100,7 @@ class Item extends AbstractType implements ItemInterface
         }
 
         $options = [
-            'label' => $item['label'],
+            'label' => !empty($item['hideLabel']) && $item['hideLabel'] ? false : $item['label'],
             'required' => $item['required'] ?? false,
             'attr' => $attributes,
         ];

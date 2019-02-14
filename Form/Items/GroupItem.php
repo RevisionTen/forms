@@ -15,6 +15,8 @@ class GroupItem extends Item
     {
         parent::buildForm($builder, $options);
 
+        $builder->remove('hideLabel');
         $builder->remove('required');
+        $builder->remove('popover');
     }
 }

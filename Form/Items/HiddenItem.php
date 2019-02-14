@@ -27,6 +27,9 @@ class HiddenItem extends Item
             'label' => 'Is Receiver',
             'required' => false,
         ]);
+
+        $builder->remove('hideLabel');
+        $builder->remove('popover');
     }
 
     /**
@@ -41,7 +44,7 @@ class HiddenItem extends Item
         }
 
         $options = [
-            'label' => $item['label'],
+            'label' => false,
             'required' => $item['required'] ?? false,
             'attr' => $attributes,
             'constraints' => [],
