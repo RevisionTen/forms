@@ -89,7 +89,7 @@ class ChoiceItem extends Item
         }
 
         $options = [
-            'label' => $item['label'] ?? false,
+            'label' => !empty($item['hideLabel']) && $item['hideLabel'] ? false : $item['label'],
             'required' => $item['required'] ?? false,
             'attr' => $attributes,
             'choices' => $parsedChoices,
@@ -97,6 +97,21 @@ class ChoiceItem extends Item
             'multiple' => $item['multiple'] ?? false,
             'placeholder' => $item['placeholder'] ?? $item['label'],
         ];
+
+        if ($item['expanded']) {
+            if ($item['multiple']) {
+                $options['label_attr'] = [
+                    'class' => 'checkbox-custom',
+                ];
+            } else {
+                $options['label_attr'] = [
+                    'class' => 'radio-custom',
+                ];
+            }
+        } elseif (!$item['multiple'])  {
+            $options['attr']['class'] = 'custom-select '.($options['attr']['class'] ?? '');
+        }
+
 
         if ($item['required']) {
             $options['constraints'] = new NotBlank();

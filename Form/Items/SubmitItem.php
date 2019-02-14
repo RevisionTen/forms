@@ -12,6 +12,19 @@ class SubmitItem extends Item
     /**
      * {@inheritdoc}
      */
+    public function buildForm(FormBuilderInterface $builder, array $options)
+    {
+        parent::buildForm($builder, $options);
+
+        $builder->remove('read_only');
+        $builder->remove('required');
+        $builder->remove('hideLabel');
+        $builder->remove('popover');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public static function getItem(FormBuilderInterface $builder, array $item)
     {
         $builder->add($item['name'], SubmitType::class, [

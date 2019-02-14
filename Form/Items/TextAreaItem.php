@@ -49,7 +49,7 @@ class TextAreaItem extends TextItem
         }
 
         $options = [
-            'label' => $item['label'],
+            'label' => !empty($item['hideLabel']) && $item['hideLabel'] ? false : $item['label'],
             'required' => $item['required'],
             'attr' => $attributes,
         ];
