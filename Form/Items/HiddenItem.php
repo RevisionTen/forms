@@ -50,11 +50,11 @@ class HiddenItem extends Item
             'constraints' => [],
         ];
 
-        if ($item['required']) {
+        if (isset($item['required']) && $item['required']) {
             $options['constraints'][] = new NotBlank();
         }
 
-        if ($item['read_only']) {
+        if (isset($item['read_only']) && $item['read_only']) {
             // Do not add the element add all. Default data remains unchanged.
         } else {
             $builder->add($item['name'], HiddenType::class, $options);

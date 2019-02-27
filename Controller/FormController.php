@@ -25,6 +25,7 @@ use RevisionTen\Forms\Services\FormService;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -255,12 +256,15 @@ class FormController extends AbstractController
      * @Route("/edit-aggregate", name="forms_edit_aggregate")
      *
      * @param Request $request
+     * @param ContainerInterface $container
      *
      * @return Response
      * @throws \Exception
      */
-    public function editAggregateAction(Request $request): Response
+    public function editAggregateAction(Request $request, ContainerInterface $container): Response
     {
+        $config = $container->getParameter('forms');
+
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
         /** @var int $id FormRead Id. */
@@ -328,7 +332,7 @@ class FormController extends AbstractController
             'formRead' => $formRead,
             'formAggregate' => $formAggregate,
             'user' => $user,
-            'config' => $this->getParameter('forms'),
+            'config' => $config,
             'itemVariables' => $itemVariables,
             'symfony4' => $symfony4,
         ]);
