@@ -39,11 +39,11 @@ class EmailItem extends TextItem
     {
         $attributes = [];
 
-        if ($item['read_only']) {
+        if (isset($item['read_only']) && $item['read_only']) {
             $attributes['readonly'] = true;
         }
 
-        if ($item['placeholder']) {
+        if (isset($item['placeholder']) && $item['placeholder']) {
             $attributes['placeholder'] = $item['placeholder'];
         }
 
@@ -65,7 +65,7 @@ class EmailItem extends TextItem
             'attr' => $attributes,
         ];
 
-        if ($item['required']) {
+        if (isset($item['required']) && $item['required']) {
             $options['constraints'] = new NotBlank();
         }
 

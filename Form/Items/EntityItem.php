@@ -85,7 +85,7 @@ class EntityItem extends Item
     {
         $attributes = [];
 
-        if ($item['read_only']) {
+        if (isset($item['read_only']) && $item['read_only']) {
             $attributes['readonly'] = true;
         }
 
@@ -114,7 +114,7 @@ class EntityItem extends Item
             'placeholder' => $item['placeholder'] ?? $item['label'],
         ];
 
-        if ($item['required']) {
+        if (isset($item['required']) && $item['required']) {
             $options['constraints'] = new NotBlank();
         }
 

@@ -57,7 +57,7 @@ class ChoiceItem extends Item
     {
         $attributes = [];
 
-        if ($item['read_only']) {
+        if (isset($item['read_only']) && $item['read_only']) {
             $attributes['readonly'] = true;
         }
 
@@ -113,7 +113,7 @@ class ChoiceItem extends Item
         }
 
 
-        if ($item['required']) {
+        if (isset($item['required']) && $item['required']) {
             $options['constraints'] = new NotBlank();
         }
 
