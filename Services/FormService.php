@@ -154,7 +154,7 @@ class FormService
     public function getForm(string $formUuid, $data = null, bool $ignore_validation = false): FormInterface
     {
         /** @var FormRead $formRead */
-        $formRead = $this->entityManager->getRepository(FormRead::class)->findOneByUuid($formUuid);
+        $formRead = $this->entityManager->getRepository(FormRead::class)->findOneBy(['uuid' => $formUuid]);
         $payload = $formRead->getPayload();
 
         $formName = strtolower(preg_replace('/[^A-Za-z0-9]/', '', $formRead->getTitle()));
@@ -162,9 +162,12 @@ class FormService
             $formName = $formRead->getUuid();
         }
 
-        $formBuilder = $this->formFactory->createNamedBuilder($formName, FormType::class, $data, [
+        $formOptions = [
             'action' => '?formular=abgeschickt',
-        ]);
+            'validation_groups' => !$ignore_validation,
+        ];
+
+        $formBuilder = $this->formFactory->createNamedBuilder($formName, FormType::class, $data, $formOptions);
 
         foreach ($payload['items'] as $item) {
             $itemClass = $this->getItemClass($item['itemName']);
@@ -172,12 +175,6 @@ class FormService
             if (method_exists($itemClass, 'getItem')) {
                 $itemClass::getItem($formBuilder, $item['data']);
             }
-        }
-
-        if ($ignore_validation) {
-            $formBuilder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {
-                $event->stopPropagation();
-            }, 900);
         }
 
         return $formBuilder->getForm();
@@ -217,15 +214,17 @@ class FormService
          *
          * @var FormRead $formRead
          */
-        $formRead = $this->entityManager->getRepository(FormRead::class)->findOneByUuid($formUuid);
+        $formRead = $this->entityManager->getRepository(FormRead::class)->findOneBy(['uuid' => $formUuid]);
+        $aggregateData = $formRead->getPayload();
 
         $ignore_validation = null !== $request && $request->get('ignore_validation');
         $form = $this->getForm($formUuid, $defaultData, $ignore_validation);
         $form->handleRequest($request);
 
         // Check If user is blocked.
+        $timelimit = $aggregateData['timelimit'] ?? 0;
         $ip = $request->getClientIp();
-        $isBlocked = $ip ? $this->isBlocked($ip, $formRead->getId()) : false;
+        $isBlocked = $ip ? $timelimit && $this->isBlocked($ip, $formRead->getId()) : false;
 
         // Display error If user is blocked.
         if (!$ignore_validation && $isBlocked) {
@@ -252,7 +251,6 @@ class FormService
             $isValid = $form->isValid() && $this->onValidate($form,$formRead, $data);
 
             if ($isValid && $this->onSubmit($form,$formRead, $data)) {
-                $aggregateData = $formRead->getPayload();
 
                 // Build and send the email.
                 $message = new \Swift_Message();
@@ -326,7 +324,6 @@ class FormService
                 ];
 
                 // Save submission in submission table.
-                $timelimit = $aggregateData['timelimit'] ?? 0;
                 if ($timelimit || $formRead->getSaveSubmissions()) {
                     $this->saveFormSubmission((int) $timelimit, $ip, $formRead, $data);
                 }
