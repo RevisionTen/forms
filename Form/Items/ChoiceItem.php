@@ -55,7 +55,9 @@ class ChoiceItem extends Item
      */
     public static function getItem(FormBuilderInterface $builder, array $item)
     {
-        $attributes = [];
+        $attributes = [
+            'aria-label' => $item['label'],
+        ];
 
         if (isset($item['read_only']) && $item['read_only']) {
             $attributes['readonly'] = true;
