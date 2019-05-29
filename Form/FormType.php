@@ -124,6 +124,11 @@ class FormType extends AbstractType
             'required' => false,
         ]);
 
+        $builder->add('trackSubmissions', CheckboxType::class, [
+            'label' => 'Track submissions',
+            'required' => false,
+        ]);
+
         $builder->add('save', SubmitType::class, [
             'label' => 'Save',
         ]);

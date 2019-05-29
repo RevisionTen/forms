@@ -22,6 +22,24 @@ class FormSubmission
     private $id;
 
     /**
+     * @var string|null
+     * @ORM\Column(type="string", nullable=true)
+     */
+    private $toEmail;
+
+    /**
+     * @var string|null
+     * @ORM\Column(type="string", nullable=true)
+     */
+    private $ccEmail;
+
+    /**
+     * @var string|null
+     * @ORM\Column(type="string", nullable=true)
+     */
+    private $bccEmail;
+
+    /**
      * @var string
      * @ORM\Column(type="string")
      */
@@ -56,20 +74,25 @@ class FormSubmission
     private $payload;
 
     /**
+     * @var bool|null
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $opened;
+
+    /**
+     * @var string|null
+     * @ORM\Column(type="string", nullable=true)
+     */
+    private $trackingToken;
+
+    /**
      * FormSubmission constructor.
      *
-     * @param FormRead  $formRead
-     * @param string    $ip
-     * @param \DateTime $expires
-     * @param array     $payload
+     * @throws \Exception
      */
-    public function __construct(FormRead $formRead, string $ip, \DateTime $expires, array $payload)
+    public function __construct()
     {
         $this->created = new \DateTime();
-        $this->form = $formRead;
-        $this->ip = $ip;
-        $this->expires = $expires;
-        $this->payload = json_encode($payload);
     }
 
     /**
@@ -88,6 +111,66 @@ class FormSubmission
     public function setId(int $id): FormSubmission
     {
         $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getToEmail(): ?string
+    {
+        return $this->toEmail;
+    }
+
+    /**
+     * @param string|null $toEmail
+     *
+     * @return FormSubmission
+     */
+    public function setToEmail(?string $toEmail): FormSubmission
+    {
+        $this->toEmail = $toEmail;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCcEmail(): ?string
+    {
+        return $this->ccEmail;
+    }
+
+    /**
+     * @param string|null $ccEmail
+     *
+     * @return FormSubmission
+     */
+    public function setCcEmail(?string $ccEmail): FormSubmission
+    {
+        $this->ccEmail = $ccEmail;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getBccEmail(): ?string
+    {
+        return $this->bccEmail;
+    }
+
+    /**
+     * @param string|null $bccEmail
+     *
+     * @return FormSubmission
+     */
+    public function setBccEmail(?string $bccEmail): FormSubmission
+    {
+        $this->bccEmail = $bccEmail;
 
         return $this;
     }
@@ -192,6 +275,46 @@ class FormSubmission
     public function setPayload($payload): self
     {
         $this->payload = json_encode($payload);
+
+        return $this;
+    }
+
+    /**
+     * @return bool|null
+     */
+    public function getOpened(): ?bool
+    {
+        return $this->opened;
+    }
+
+    /**
+     * @param bool|null $opened
+     *
+     * @return FormSubmission
+     */
+    public function setOpened(?bool $opened): FormSubmission
+    {
+        $this->opened = $opened;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTrackingToken(): ?string
+    {
+        return $this->trackingToken;
+    }
+
+    /**
+     * @param string|null $trackingToken
+     *
+     * @return FormSubmission
+     */
+    public function setTrackingToken(?string $trackingToken): FormSubmission
+    {
+        $this->trackingToken = $trackingToken;
 
         return $this;
     }

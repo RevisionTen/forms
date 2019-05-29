@@ -7,7 +7,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class FormsBundle extends Bundle
 {
-    public const VERSION = '1.1.3';
+    public const VERSION = '1.1.4';
 
     /**
      * {@inheritdoc}

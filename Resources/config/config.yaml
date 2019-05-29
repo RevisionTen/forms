@@ -24,6 +24,9 @@ services:
     RevisionTen\Forms\Controller\FormController:
         autowire: true
         autoconfigure: true
+    RevisionTen\Forms\Controller\TrackingController:
+        autowire: true
+        autoconfigure: true
     RevisionTen\Forms\Form\Items\EntityItem:
         autoconfigure: true
         autowire: true

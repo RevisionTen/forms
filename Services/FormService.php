@@ -16,12 +16,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormError;
-use Symfony\Component\Form\FormEvent;
-use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RequestContext;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class FormService.
@@ -64,6 +64,11 @@ class FormService
     private $formFactory;
 
     /**
+     * @var UrlGeneratorInterface
+     */
+    private $urlGenerator;
+
+    /**
      * @var array
      */
     private $config;
@@ -78,9 +83,10 @@ class FormService
      * @param EntityManagerInterface $entityManager
      * @param AggregateFactory       $aggregateFactory
      * @param FormFactoryInterface   $formFactory
+     * @param UrlGeneratorInterface  $urlGenerator
      * @param array                  $config
      */
-    public function __construct(ContainerInterface $container, TranslatorInterface $translator, \Swift_Mailer $mailer, \Twig_Environment $twig, EntityManagerInterface $entityManager, AggregateFactory $aggregateFactory, FormFactoryInterface $formFactory, array $config)
+    public function __construct(ContainerInterface $container, TranslatorInterface $translator, \Swift_Mailer $mailer, \Twig_Environment $twig, EntityManagerInterface $entityManager, AggregateFactory $aggregateFactory, FormFactoryInterface $formFactory, UrlGeneratorInterface $urlGenerator, array $config)
     {
         $this->container = $container;
         $this->translator = $translator;
@@ -89,6 +95,7 @@ class FormService
         $this->entityManager = $entityManager;
         $this->aggregateFactory = $aggregateFactory;
         $this->formFactory = $formFactory;
+        $this->urlGenerator = $urlGenerator;
         $this->config = $config;
     }
 
@@ -105,7 +112,7 @@ class FormService
         $aggregate = $this->aggregateFactory->build($formUuid, Form::class);
 
         // Build FormRead entity from Aggregate.
-        $formRead = $this->entityManager->getRepository(FormRead::class)->findOneByUuid($formUuid) ?? new FormRead();
+        $formRead = $this->entityManager->getRepository(FormRead::class)->findOneBy(['uuid' => $formUuid]) ?? new FormRead();
         $formRead->setVersion($aggregate->getStreamVersion());
         $formRead->setUuid($formUuid);
 
@@ -124,6 +131,7 @@ class FormService
         $formRead->setHtml($aggregate->html);
         $formRead->setSuccessText($aggregate->successText);
         $formRead->setSaveSubmissions($aggregate->saveSubmissions);
+        $formRead->setTrackSubmissions($aggregate->trackSubmissions);
         $formRead->setCreated($aggregate->getCreated());
         $formRead->setModified($aggregate->getModified());
 
@@ -222,7 +230,7 @@ class FormService
         $form->handleRequest($request);
 
         // Check If user is blocked.
-        $timelimit = $aggregateData['timelimit'] ?? 0;
+        $timelimit = (int) ($aggregateData['timelimit'] ?? 0);
         $ip = $request->getClientIp();
         $isBlocked = $ip ? $timelimit && $this->isBlocked($ip, $formRead->getId()) : false;
 
@@ -295,22 +303,45 @@ class FormService
                 // Get Subject.
                 $message->setSubject($this->getField($aggregateData, $data, 'isSubject') ?? $formRead->getTitle());
 
+                // Generate tracking token.
+                $trackingToken = md5(random_bytes(10));
+
                 // Get the message body.
                 [$body, $contentType] = $this->renderEmailTemplate($formRead->getEmailTemplate(), $formRead->getHtml(), $data);
                 $message->setBody($body, $contentType);
 
                 // Send different emails to main recipient and copy recipients.
-                if (!empty($formRead->getEmailTemplateCopy())) {
+                if ($formRead->getTrackSubmissions() || !empty($formRead->getEmailTemplateCopy())) {
                     // Send copies with different body.
                     $messageCc = clone $message;
-                    [$body, $contentType] = $this->renderEmailTemplate($formRead->getEmailTemplateCopy(), $formRead->getHtml(), $data);
-                    $messageCc->setBody($body, $contentType);
+                    if (!empty($formRead->getEmailTemplateCopy())) {
+                        // Use cc email template.
+                        [$body, $contentType] = $this->renderEmailTemplate($formRead->getEmailTemplateCopy(), $formRead->getHtml(), $data);
+                        $messageCc->setBody($body, $contentType);
+                    }
                     $messageCc->setTo(null);
                     $this->mailer->send($messageCc);
 
                     // Send to main recipient.
                     $message->setCc(null);
                     $message->setBcc(null);
+                    if ($formRead->getTrackSubmissions()) {
+                        // Generate tracking pixel url.
+                        $context = new RequestContext();
+                        $context = $context->fromRequest($request);
+                        $this->urlGenerator->setContext($context);
+                        $trackingUrl = $this->urlGenerator->generate('forms_tracking_pixel', [
+                            'trackingToken' => $trackingToken,
+                        ], UrlGeneratorInterface::ABSOLUTE_URL);
+
+                        // Append tracking pixel and always send mail as html.
+                        $body = $message->getBody();
+                        if ($message->getBodyContentType() === 'text/plain') {
+                            $body = '<pre>'.$body.'</pre>';
+                        }
+                        $body .= '<br/><img src="'.$trackingUrl.'">';
+                        $message->setBody($body, 'text/html');
+                    }
                     $this->mailer->send($message);
                 } else {
                     // Send to all recipients with same message body.
@@ -325,7 +356,16 @@ class FormService
 
                 // Save submission in submission table.
                 if ($timelimit || $formRead->getSaveSubmissions()) {
-                    $this->saveFormSubmission((int) $timelimit, $ip, $formRead, $data);
+                    $this->saveFormSubmission(
+                        $timelimit,
+                        $ip,
+                        $formRead,
+                        $data,
+                        $to,
+                        $cc,
+                        $bcc,
+                        $trackingToken
+                    );
                 }
             }
         }
@@ -382,12 +422,26 @@ class FormService
         return true;
     }
 
-    private function saveFormSubmission(int $timelimit, string $ip, FormRead $formRead, array $submittedData): void
+    private function saveFormSubmission(int $timelimit, string $ip, FormRead $formRead, array $submittedData, string $to, ?string $cc, ?string $bcc, string $trackingToken): void
     {
         $expiresTimestamp = time() + $timelimit;
         $expires = new \DateTime();
         $expires->setTimestamp($expiresTimestamp);
-        $formSubmission = new FormSubmission($formRead, $ip, $expires, $submittedData);
+
+        $formSubmission = new FormSubmission();
+        $formSubmission->setToEmail($to);
+        $formSubmission->setCcEmail($cc);
+        $formSubmission->setBccEmail($bcc);
+        $formSubmission->setForm($formRead);
+        $formSubmission->setIp($ip);
+        $formSubmission->setExpires($expires);
+        $formSubmission->setPayload($submittedData);
+
+        if ($formRead->getTrackSubmissions()) {
+            $formSubmission->setTrackingToken($trackingToken);
+            $formSubmission->setOpened(false);
+        }
+
         $this->entityManager->persist($formSubmission);
         $this->entityManager->flush();
     }
@@ -467,7 +521,7 @@ class FormService
         return $isField ? $data[$isField] : null;
     }
 
-    public function getFormSubmissions(int $id)
+    public function getFormSubmissions(int $id): array
     {
         /** @var FormSubmission[] $formSubmissions */
         $formSubmissions = $this->entityManager->getRepository(FormSubmission::class)->findBy([

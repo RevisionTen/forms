@@ -1,0 +1,49 @@
+{% extends '@EasyAdmin/default/layout.html.twig' %}
+
+{% block content_title %}
+    {{ 'Submissions'|trans }}
+{% endblock %}
+
+{% block body_class %}submissions{% endblock %}
+
+{% block main %}
+<div>
+    {% if submissions|length > 0 %}
+        <table class="table datagrid">
+
+            <thead>
+                <tr>
+                    {% for field, label in tableHeaders %}
+                        <th>
+                            <span>
+                                {{ label }}
+                            </span>
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+
+            <tbody>
+
+            {% for submission in submissions %}
+                <tr>
+                    {% for field, label in tableHeaders %}
+                        <td>
+                            {{ submission[field] is defined ? submission[field] : ''}}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="p-3">
+            {{ 'No saved submissions'|trans }}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content_footer_wrapper %}
+    {# Replace with nothing, because the footer is not needed here. #}
+{% endblock %}

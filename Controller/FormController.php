@@ -21,6 +21,7 @@ use RevisionTen\Forms\Handler\FormBaseHandler;
 use RevisionTen\Forms\Interfaces\ItemInterface;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\Forms\Model\FormRead;
+use RevisionTen\Forms\Model\FormSubmission;
 use RevisionTen\Forms\Services\FormService;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
@@ -649,14 +650,14 @@ class FormController extends AbstractController
     }
 
     /**
-     * @Route("/submissions", name="forms_submissions")
+     * @Route("/submissions-download", name="forms_submissions_download")
      *
      * @param SerializerInterface $serializer
      * @param Request             $request
      *
      * @return Response
      */
-    public function submissions(SerializerInterface $serializer, Request $request): Response
+    public function submissionsDownload(SerializerInterface $serializer, Request $request): Response
     {
         /** @var int $id FormRead Id. */
         $id = (int) $request->get('id');
@@ -671,5 +672,63 @@ class FormController extends AbstractController
         $response->headers->set('Content-Disposition', 'attachment; filename="submissions.csv"');
 
         return $response;
+    }
+
+    /**
+     * TODO: Unused.
+     *
+     * @Route("/submissions", name="forms_submissions")
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function submissions(Request $request): Response
+    {
+        /** @var int $id FormRead Id. */
+        $id = (int) $request->get('id');
+
+        /** @var FormSubmission[] $formSubmissions */
+        $formSubmissions = $this->entityManager->getRepository(FormSubmission::class)->findBy([
+            'form' => $id,
+        ]);
+
+        $submissions = array_map(function ($formSubmission) {
+            /** @var FormSubmission $formSubmission */
+            $payload = $formSubmission->getPayload();
+            $payload['created'] = $formSubmission->getCreated()->format('Y-m-d H:i:s');
+            $payload['ip'] = $formSubmission->getIp();
+            $payload['opened'] = $formSubmission->getOpened();
+
+            return $payload;
+        }, $formSubmissions);
+        rsort($submissions);
+
+        /** @var FormRead $formRead */
+        $formRead = $this->entityManager->getRepository(FormRead::class)->findOneBy(['id' => $id]);
+        $payload = $formRead->getPayload();
+
+        $tableHeaders = [];
+        foreach ($payload['items'] as $item) {
+            $tableHeaders[$item['data']['name']] = $item['data']['label'];
+        }
+        // Get empty fields.
+        $usedHeaders = [];
+        foreach ($submissions as $submission) {
+            foreach ($submission as $field => $value) {
+                if (null !== $value) {
+                    $usedHeaders[$field] = $field;
+                }
+            }
+        }
+        $tableHeaders = array_intersect_key($tableHeaders, $usedHeaders);
+        $tableHeaders['created'] = $this->translator->trans('Created');
+        $tableHeaders['ip'] = $this->translator->trans('IP-Address');
+        $tableHeaders['opened'] = $this->translator->trans('Opened');
+
+        return $this->render('@forms/Admin/submissions.html.twig', [
+            'submissions' => $submissions,
+            'tableHeaders' => $tableHeaders,
+        ]);
     }
 }
