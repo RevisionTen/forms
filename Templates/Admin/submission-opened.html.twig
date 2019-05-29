@@ -1,0 +1,7 @@
+{% if value is null %}
+    <span class="badge badge-info">{{ 'Not tracked'|trans }}<span>
+{% elseif value %}
+    <span class="badge badge-success">{{ 'label.true'|trans({}, 'EasyAdminBundle') }}<span>
+{% else %}
+    <span class="badge badge-danger">{{ 'label.false'|trans({}, 'EasyAdminBundle') }}</span>
+{% endif %}

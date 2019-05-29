@@ -62,13 +62,13 @@ class FormRead
     private $email;
 
     /**
-     * @var string
+     * @var string|null
      * @ORM\Column(type="string", nullable=true)
      */
     private $emailCC;
 
     /**
-     * @var string
+     * @var string|null
      * @ORM\Column(type="string", nullable=true)
      */
     private $emailBCC;
@@ -80,13 +80,13 @@ class FormRead
     private $sender;
 
     /**
-     * @var string
+     * @var string|null
      * @ORM\Column(type="string", nullable=true)
      */
     private $template;
 
     /**
-     * @var string
+     * @var string|null
      * @ORM\Column(type="text", nullable=true)
      */
     private $emailTemplate;
@@ -98,28 +98,34 @@ class FormRead
     private $emailTemplateCopy;
 
     /**
-     * @var bool
+     * @var bool|null
      * @ORM\Column(type="boolean", nullable=true)
      */
     private $html;
 
     /**
-     * @var bool
+     * @var bool|null
      * @ORM\Column(type="boolean", nullable=true)
      */
     private $deleted;
 
     /**
-     * @var string
+     * @var string|null
      * @ORM\Column(type="text", nullable=true)
      */
     private $successText;
 
     /**
-     * @var bool
+     * @var bool|null
      * @ORM\Column(type="boolean", nullable=true)
      */
     private $saveSubmissions;
+
+    /**
+     * @var bool|null
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $trackSubmissions;
 
     /**
      * @var \DateTime
@@ -443,11 +449,32 @@ class FormRead
 
     /**
      * @param bool|null $saveSubmissions
+     *
      * @return FormRead
      */
     public function setSaveSubmissions(?bool $saveSubmissions): self
     {
         $this->saveSubmissions = (bool) $saveSubmissions;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getTrackSubmissions(): bool
+    {
+        return (bool) $this->trackSubmissions;
+    }
+
+    /**
+     * @param bool|null $trackSubmissions
+     *
+     * @return FormRead
+     */
+    public function setTrackSubmissions(?bool $trackSubmissions): self
+    {
+        $this->trackSubmissions = (bool) $trackSubmissions;
 
         return $this;
     }

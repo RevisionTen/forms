@@ -6,6 +6,7 @@ easy_admin:
               children:
                     - { label: 'Manage Forms', entity: 'FormRead', icon: 'check' }
                     - { label: 'Add Form', route: 'forms_create_form', icon: 'plus' }
+                    - { label: 'Submissions', entity: 'FormSubmission', icon: 'envelope' }
     entities:
         FormRead:
             label: 'Forms'
@@ -25,3 +26,29 @@ easy_admin:
                     - 'version'
                     - { property: 'created', type: 'datetime' }
                     - { property: 'modified', type: 'datetime' }
+        FormSubmission:
+            label: 'Submissions'
+            class: RevisionTen\Forms\Model\FormSubmission
+            list:
+                actions:
+                    - 'show'
+                    - '-new'
+                    - '-edit'
+                fields:
+                    - 'id'
+                    - 'toEmail'
+                    - { property: 'form', type: 'string' }
+                    - { property: 'opened', template: '@forms/Admin/submission-opened.html.twig' }
+                    - { property: 'created', type: 'datetime' }
+            show:
+                actions:
+                    - '-edit'
+                fields:
+                    - 'id'
+                    - { property: 'toEmail', type: 'string' }
+                    - { property: 'ccEmail', type: 'string' }
+                    - { property: 'bccEmail', type: 'string' }
+                    - { property: 'form', type: 'string' }
+                    - { property: 'opened', template: '@forms/Admin/submission-opened.html.twig' }
+                    - { property: 'created', type: 'datetime' }
+                    - { property: 'payload', template: '@forms/Admin/submission-payload.html.twig' }

@@ -50,6 +50,9 @@ final class Form extends Aggregate
     /** @var bool */
     public $saveSubmissions;
 
+    /** @var bool */
+    public $trackSubmissions = false;
+
     /** @var array */
     public $items;
 }
