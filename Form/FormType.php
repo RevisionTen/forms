@@ -129,6 +129,11 @@ class FormType extends AbstractType
             'required' => false,
         ]);
 
+        $builder->add('disableCsrfProtection', CheckboxType::class, [
+            'label' => 'Disable CSRF protection',
+            'required' => false,
+        ]);
+
         $builder->add('save', SubmitType::class, [
             'label' => 'Save',
         ]);

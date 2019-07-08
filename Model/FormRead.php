@@ -128,6 +128,12 @@ class FormRead
     private $trackSubmissions;
 
     /**
+     * @var bool|null
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $disableCsrfProtection;
+
+    /**
      * @var \DateTime
      * @ORM\Column(type="datetime")
      */
@@ -475,6 +481,26 @@ class FormRead
     public function setTrackSubmissions(?bool $trackSubmissions): self
     {
         $this->trackSubmissions = (bool) $trackSubmissions;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getDisableCsrfProtection(): bool
+    {
+        return (bool) $this->disableCsrfProtection;
+    }
+
+    /**
+     * @param bool|null $disableCsrfProtection
+     *
+     * @return FormRead
+     */
+    public function setDisableCsrfProtection(?bool $disableCsrfProtection): self
+    {
+        $this->disableCsrfProtection = (bool) $disableCsrfProtection;
 
         return $this;
     }

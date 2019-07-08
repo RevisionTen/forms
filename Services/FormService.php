@@ -132,6 +132,7 @@ class FormService
         $formRead->setSuccessText($aggregate->successText);
         $formRead->setSaveSubmissions($aggregate->saveSubmissions);
         $formRead->setTrackSubmissions($aggregate->trackSubmissions);
+        $formRead->setDisableCsrfProtection($aggregate->disableCsrfProtection);
         $formRead->setCreated($aggregate->getCreated());
         $formRead->setModified($aggregate->getModified());
 
@@ -173,6 +174,7 @@ class FormService
         $formOptions = [
             'action' => '?formular=abgeschickt',
             'validation_groups' => !$ignore_validation,
+            'csrf_protection' => !$formRead->getDisableCsrfProtection(),
         ];
 
         $formBuilder = $this->formFactory->createNamedBuilder($formName, FormType::class, $data, $formOptions);
