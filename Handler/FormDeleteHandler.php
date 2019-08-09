@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormDeleteCommand;
 use RevisionTen\Forms\Event\FormDeleteEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
@@ -19,7 +18,7 @@ final class FormDeleteHandler extends FormBaseHandler implements HandlerInterfac
      *
      * @var Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
         // Change Aggregate state.
         $aggregate->deleted = true;
@@ -30,17 +29,15 @@ final class FormDeleteHandler extends FormBaseHandler implements HandlerInterfac
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormDeleteCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormDeleteEvent($command);
+        return new FormDeleteEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**

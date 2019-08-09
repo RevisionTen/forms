@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormCreateCommand;
 use RevisionTen\Forms\Event\FormCreateEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
@@ -20,9 +19,9 @@ final class FormCreateHandler extends FormBaseHandler implements HandlerInterfac
      *
      * @var Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         // Change Aggregate state.
         // Get each public property from the aggregate and update it If a new value exists in the payload.
@@ -40,17 +39,15 @@ final class FormCreateHandler extends FormBaseHandler implements HandlerInterfac
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormCreateCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormCreateEvent($command);
+        return new FormCreateEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**

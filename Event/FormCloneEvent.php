@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Event;
 
-use RevisionTen\Forms\Command\FormCloneCommand;
-use RevisionTen\Forms\Listener\FormCloneListener;
-use RevisionTen\CQRS\Event\Event;
+use RevisionTen\CQRS\Event\AggregateEvent;
 use RevisionTen\CQRS\Interfaces\EventInterface;
+use RevisionTen\Forms\Handler\FormCloneHandler;
+use RevisionTen\Forms\Model\Form;
 
-class FormCloneEvent extends Event implements EventInterface
+class FormCloneEvent extends AggregateEvent implements EventInterface
 {
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
+    public static function getAggregateClass(): string
     {
-        return FormCloneCommand::class;
+        return Form::class;
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function getListenerClass(): string
+    public static function getHandlerClass(): string
     {
-        return FormCloneListener::class;
+        return FormCloneHandler::class;
     }
 
     /**
@@ -33,13 +33,5 @@ class FormCloneEvent extends Event implements EventInterface
     public function getMessage(): string
     {
         return 'Form duplicated';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function getCode(): int
-    {
-        return CODE_CREATED;
     }
 }

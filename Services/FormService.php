@@ -253,7 +253,7 @@ class FormService
         if (!$ignore_validation && !$isBlocked && $form->isSubmitted()) {
             // Check if the form is valid.
             #$submittedData = $form->getData();
-            $submittedData = array_map(function ($field) {
+            $submittedData = array_map(static function ($field) {
                 /** @var FormInterface $field */
                 return $field->getData();
             }, $form->all());
@@ -530,7 +530,7 @@ class FormService
             'form' => $id,
         ]);
 
-        $payloads = array_map(function ($formSubmission) {
+        $payloads = array_map(static function ($formSubmission) {
             /** @var FormSubmission $formSubmission */
             return $formSubmission->getPayload();
         }, $formSubmissions);

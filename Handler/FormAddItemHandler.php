@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormAddItemCommand;
 use RevisionTen\Forms\Event\FormAddItemEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
@@ -20,9 +19,9 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
      *
      * @var Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         if (isset($payload['data']['name'])) {
             // Clean the name to only contain lowercase letters.
@@ -34,7 +33,7 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
 
         // Build item data.
         $newItem = [
-            'uuid' => $command->getUuid(),
+            'uuid' => $event->getCommandUuid(),
             'itemName' => $itemName,
             'data' => $data,
         ];
@@ -44,7 +43,7 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
 
         if ($parentUuid && \is_string($parentUuid)) {
             // A function that add the new item to the target parent.
-            $addItemFunction = function (&$item, &$collection) use ($newItem) {
+            $addItemFunction = static function (&$item, &$collection) use ($newItem) {
                 if (!isset($item['items'])) {
                     $item['items'] = [];
                 }
@@ -62,17 +61,15 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormAddItemCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormAddItemEvent($command);
+        return new FormAddItemEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**

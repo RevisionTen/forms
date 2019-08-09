@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Event;
 
-use RevisionTen\Forms\Command\FormEditItemCommand;
-use RevisionTen\Forms\Listener\FormEditItemListener;
-use RevisionTen\CQRS\Event\Event;
+use RevisionTen\CQRS\Event\AggregateEvent;
 use RevisionTen\CQRS\Interfaces\EventInterface;
+use RevisionTen\Forms\Handler\FormEditItemHandler;
+use RevisionTen\Forms\Model\Form;
 
-class FormEditItemEvent extends Event implements EventInterface
+class FormEditItemEvent extends AggregateEvent implements EventInterface
 {
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
+    public static function getAggregateClass(): string
     {
-        return FormEditItemCommand::class;
+        return Form::class;
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function getListenerClass(): string
+    public static function getHandlerClass(): string
     {
-        return FormEditItemListener::class;
+        return FormEditItemHandler::class;
     }
 
     /**
@@ -33,13 +33,5 @@ class FormEditItemEvent extends Event implements EventInterface
     public function getMessage(): string
     {
         return 'Item edited';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function getCode(): int
-    {
-        return CODE_OK;
     }
 }

@@ -36,10 +36,7 @@ services:
         autowire: true
         arguments:
             $config: '%forms%'
-    RevisionTen\Forms\Services\SenderService:
+    RevisionTen\Forms\EventSubscriber\:
+        resource: '../../EventSubscriber/*'
         autowire: true
-    RevisionTen\Forms\Listener\:
-        resource: '../../Listener/*'
-        exclude: '../../Listener/{FormBaseListener.php}'
-        public: true
-        autowire: true
+        autoconfigure: true

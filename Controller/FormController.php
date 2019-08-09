@@ -194,11 +194,13 @@ class FormController extends AbstractController
             $aggregateUuid = Uuid::uuid1()->toString();
 
             // Execute Command.
-            $success = false;
-            $this->commandBus->dispatch(new FormCreateCommand($user->getId(), Uuid::uuid1()->toString(), $aggregateUuid, 0, $data, function ($commandBus, $event) use (&$success) {
-                // Callback.
-                $success = true;
-            }));
+            $success = $this->commandBus->dispatch(new FormCreateCommand(
+                $user->getId(),
+                Uuid::uuid1()->toString(),
+                $aggregateUuid,
+                0,
+                $data
+            ));
 
             if ($success) {
                 $this->addFlash(
@@ -244,11 +246,13 @@ class FormController extends AbstractController
         $formAggregate = $this->aggregateFactory->build($formUuid, Form::class, null, $user->getId());
 
         // Execute Command.
-        $success = false;
-        $this->commandBus->dispatch(new FormDeleteCommand($user->getId(), Uuid::uuid1()->toString(), $formAggregate->getUuid(), $formAggregate->getStreamVersion(), [], function ($commandBus, $event) use (&$success) {
-            // Callback.
-            $success = true;
-        }));
+        $success = $this->commandBus->dispatch(new FormDeleteCommand(
+            $user->getId(),
+            Uuid::uuid1()->toString(),
+            $formAggregate->getUuid(),
+            $formAggregate->getStreamVersion(),
+            []
+        ));
 
         return $success ? $this->redirect('/admin/?entity=FormRead&action=list') : $this->errorResponse($formAggregate->getUuid());
     }
@@ -304,11 +308,13 @@ class FormController extends AbstractController
             $data = $this->diff($aggregateData, $data);
 
             // Execute Command.
-            $success = false;
-            $this->commandBus->dispatch(new FormEditCommand($user->getId(), Uuid::uuid1()->toString(), $formAggregate->getUuid(), $formAggregate->getStreamVersion(), $data, function ($commandBus, $event) use (&$success) {
-                // Callback.
-                $success = true;
-            }));
+            $success = $this->commandBus->dispatch(new FormEditCommand(
+                $user->getId(),
+                Uuid::uuid1()->toString(),
+                $formAggregate->getUuid(),
+                $formAggregate->getStreamVersion(),
+                $data
+            ));
 
             if ($success) {
                 $this->addFlash(
@@ -384,15 +390,17 @@ class FormController extends AbstractController
             $data = $form->getData()['data'];
 
             // Execute Command.
-            $success = false;
-            $this->commandBus->dispatch(new FormAddItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
-                'itemName' => $itemName,
-                'data' => $data,
-                'parent' => $parent,
-            ], function ($commandBus, $event) use (&$success) {
-                // Callback.
-                $success = true;
-            }));
+            $success = $this->commandBus->dispatch(new FormAddItemCommand(
+                $user->getId(),
+                Uuid::uuid1()->toString(),
+                $formUuid,
+                $onVersion,
+                [
+                    'itemName' => $itemName,
+                    'data' => $data,
+                    'parent' => $parent,
+                ]
+            ));
 
             if ($success) {
                 $this->addFlash(
@@ -462,14 +470,16 @@ class FormController extends AbstractController
 
                 if ($form->isValid()) {
                     // Execute Command.
-                    $success = false;
-                    $this->commandBus->dispatch(new FormEditItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
-                        'uuid' => $itemUuid,
-                        'data' => $data,
-                    ], function ($commandBus, $event) use (&$success) {
-                        // Callback.
-                        $success = true;
-                    }));
+                    $success = $this->commandBus->dispatch(new FormEditItemCommand(
+                        $user->getId(),
+                        Uuid::uuid1()->toString(),
+                        $formUuid,
+                        $onVersion,
+                        [
+                            'uuid' => $itemUuid,
+                            'data' => $data,
+                        ]
+                    ));
 
                     if ($success) {
                         $this->addFlash(
@@ -510,13 +520,15 @@ class FormController extends AbstractController
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
-        $success = false;
-        $this->commandBus->dispatch(new FormRemoveItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
-            'uuid' => $itemUuid,
-        ], function ($commandBus, $event) use (&$success) {
-            // Callback.
-            $success = true;
-        }));
+        $success = $this->commandBus->dispatch(new FormRemoveItemCommand(
+            $user->getId(),
+            Uuid::uuid1()->toString(),
+            $formUuid,
+            $onVersion,
+            [
+                'uuid' => $itemUuid,
+            ]
+        ));
 
         if ($success) {
             $this->addFlash(
@@ -548,14 +560,16 @@ class FormController extends AbstractController
         /** @var \Symfony\Component\Security\Core\User\UserInterface $user */
         $user = $this->getUser();
 
-        $success = false;
-        $this->commandBus->dispatch(new FormShiftItemCommand($user->getId(), Uuid::uuid1()->toString(), $formUuid, $onVersion, [
-            'uuid' => $itemUuid,
-            'direction' => $direction,
-        ], function ($commandBus, $event) use (&$success) {
-            // Callback.
-            $success = true;
-        }));
+        $success = $this->commandBus->dispatch(new FormShiftItemCommand(
+            $user->getId(),
+            Uuid::uuid1()->toString(),
+            $formUuid,
+            $onVersion,
+            [
+                'uuid' => $itemUuid,
+                'direction' => $direction,
+            ]
+        ));
 
         if ($success) {
             $this->addFlash(
@@ -631,11 +645,13 @@ class FormController extends AbstractController
         $aggregateUuid = Uuid::uuid1()->toString();
 
         // Execute Command.
-        $success = false;
-        $this->commandBus->dispatch(new FormCloneCommand($user->getId(), Uuid::uuid1()->toString(), $aggregateUuid, 0, $data, function ($commandBus, $event) use (&$success) {
-            // Callback.
-            $success = true;
-        }));
+        $success = $this->commandBus->dispatch(new FormCloneCommand(
+            $user->getId(),
+            Uuid::uuid1()->toString(),
+            $aggregateUuid,
+            0,
+            $data
+        ));
 
         if ($success) {
             $this->addFlash(
@@ -693,7 +709,7 @@ class FormController extends AbstractController
             'form' => $id,
         ]);
 
-        $submissions = array_map(function ($formSubmission) {
+        $submissions = array_map(static function ($formSubmission) {
             /** @var FormSubmission $formSubmission */
             $payload = $formSubmission->getPayload();
             $payload['created'] = $formSubmission->getCreated()->format('Y-m-d H:i:s');

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormShiftItemCommand;
 use RevisionTen\Forms\Event\FormShiftItemEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
@@ -64,15 +63,15 @@ final class FormShiftItemHandler extends FormBaseHandler implements HandlerInter
      *
      * @var Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         $uuid = $payload['uuid'];
         $direction = $payload['direction'];
 
         // A function that shifts all matching items in a provided direction.
-        $shiftFunction = function (&$item, &$collection) use ($direction, $uuid) {
+        $shiftFunction = static function (&$item, &$collection) use ($direction, $uuid) {
             if (null !== $collection) {
                 // Get the key of the item that will shift.
                 $itemKey = null;
@@ -99,17 +98,15 @@ final class FormShiftItemHandler extends FormBaseHandler implements HandlerInter
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormShiftItemCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormShiftItemEvent($command);
+        return new FormShiftItemEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**

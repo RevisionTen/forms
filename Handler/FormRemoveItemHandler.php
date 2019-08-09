@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormRemoveItemCommand;
 use RevisionTen\Forms\Event\FormRemoveItemEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
@@ -20,16 +19,16 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
      *
      * @param Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         $uuid = $payload['uuid'];
 
         // A function that removes a item from its parent.
-        $removeAndRebase = function (&$collection, $uuid) {
+        $removeAndRebase = static function (&$collection, $uuid) {
             // Remove the item by filtering the items array.
-            $collection = array_filter($collection, function ($item) use ($uuid) {
+            $collection = array_filter($collection, static function ($item) use ($uuid) {
                 return $uuid !== $item['uuid'];
             });
 
@@ -41,7 +40,7 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
         $removeAndRebase($aggregate->items, $uuid);
 
         // Remove from children.
-        $removeItemFunction = function (&$item, &$collection) use ($removeAndRebase) {
+        $removeItemFunction = static function (&$item, &$collection) use ($removeAndRebase) {
             $removeAndRebase($collection, $item['uuid']);
         };
         self::onItem($aggregate, $uuid, $removeItemFunction);
@@ -52,17 +51,15 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormRemoveItemCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormRemoveItemEvent($command);
+        return new FormRemoveItemEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**

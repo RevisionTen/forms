@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Event;
 
-use RevisionTen\Forms\Command\FormShiftItemCommand;
-use RevisionTen\Forms\Listener\FormShiftItemListener;
-use RevisionTen\CQRS\Event\Event;
+use RevisionTen\CQRS\Event\AggregateEvent;
 use RevisionTen\CQRS\Interfaces\EventInterface;
+use RevisionTen\Forms\Handler\FormShiftItemHandler;
+use RevisionTen\Forms\Model\Form;
 
-final class FormShiftItemEvent extends Event implements EventInterface
+final class FormShiftItemEvent extends AggregateEvent implements EventInterface
 {
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
+    public static function getAggregateClass(): string
     {
-        return FormShiftItemCommand::class;
+        return Form::class;
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function getListenerClass(): string
+    public static function getHandlerClass(): string
     {
-        return FormShiftItemListener::class;
+        return FormShiftItemHandler::class;
     }
 
     /**
@@ -33,13 +33,5 @@ final class FormShiftItemEvent extends Event implements EventInterface
     public function getMessage(): string
     {
         return 'Item reordered';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function getCode(): int
-    {
-        return CODE_OK;
     }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormEditItemCommand;
 use RevisionTen\Forms\Event\FormEditItemEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
@@ -20,12 +19,12 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
      *
      * @var Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         if (isset($payload['data']['name'])) {
-            // Clean the name to only contrain lowercase letters.
+            // Clean the name to only contain lowercase letters.
             $payload['data']['name'] = strtolower(preg_replace('/[^A-Za-z0-9]/', '', $payload['data']['name']));
         }
 
@@ -34,7 +33,7 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
         $uuid = $payload['uuid'];
 
         // A function that updates the items data by merging it with the new data.
-        $updateDataFunction = function (&$item, &$collection) use ($data) {
+        $updateDataFunction = static function (&$item, &$collection) use ($data) {
             $item['data'] = array_merge($item['data'], $data);
         };
         self::onItem($aggregate, $uuid, $updateDataFunction);
@@ -45,17 +44,15 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormEditItemCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormEditItemEvent($command);
+        return new FormEditItemEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**

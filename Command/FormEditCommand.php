@@ -14,7 +14,7 @@ class FormEditCommand extends Command implements CommandInterface
     /**
      * {@inheritdoc}
      */
-    public function getHandlerClass(): string
+    public static function getHandlerClass(): string
     {
         return FormEditHandler::class;
     }
@@ -22,7 +22,7 @@ class FormEditCommand extends Command implements CommandInterface
     /**
      * {@inheritdoc}
      */
-    public function getAggregateClass(): string
+    public static function getAggregateClass(): string
     {
         return Form::class;
     }
