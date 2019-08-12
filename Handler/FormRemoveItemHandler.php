@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
+use RevisionTen\CQRS\Exception\CommandValidationException;
 use RevisionTen\Forms\Event\FormRemoveItemEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
 use RevisionTen\CQRS\Interfaces\CommandInterface;
 use RevisionTen\CQRS\Interfaces\EventInterface;
 use RevisionTen\CQRS\Interfaces\HandlerInterface;
-use RevisionTen\CQRS\Message\Message;
+use function is_string;
 
 final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInterface
 {
@@ -72,28 +73,24 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
         $payload = $command->getPayload();
         // The uuid to remove.
         $uuid = $payload['uuid'] ?? null;
-        $item = \is_string($uuid) ? self::getItem($aggregate, $uuid) : false;
+        $item = is_string($uuid) ? self::getItem($aggregate, $uuid) : false;
 
         if (null === $uuid) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'No uuid to remove is set',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         if (!$item) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'Item with this uuid was not found',
                 CODE_CONFLICT,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         return true;

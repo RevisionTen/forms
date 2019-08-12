@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
+use RevisionTen\CQRS\Exception\CommandValidationException;
 use RevisionTen\Forms\Event\FormAddItemEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
 use RevisionTen\CQRS\Interfaces\CommandInterface;
 use RevisionTen\CQRS\Interfaces\EventInterface;
 use RevisionTen\CQRS\Interfaces\HandlerInterface;
-use RevisionTen\CQRS\Message\Message;
+use function is_string;
 
 final class FormAddItemHandler extends FormBaseHandler implements HandlerInterface
 {
@@ -41,7 +42,7 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
         // Add to items.
         $parentUuid = $payload['parent'] ?? null;
 
-        if ($parentUuid && \is_string($parentUuid)) {
+        if ($parentUuid && is_string($parentUuid)) {
             // A function that add the new item to the target parent.
             $addItemFunction = static function (&$item, &$collection) use ($newItem) {
                 if (!isset($item['items'])) {
@@ -80,25 +81,21 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
         $payload = $command->getPayload();
 
         if (!isset($payload['itemName'])) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'No item type set',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         if (!isset($payload['data'])) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'No data set',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         return true;
