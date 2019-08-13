@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Upgraded CQRS classes
 
+## [1.1.6] - 2019-08-13
+### Changed
+- Fixed onValidate return value
+
 ## [1.1.5] - 2019-07-08
 ### Changed
 - Added option to disable CSRF protection

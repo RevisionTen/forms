@@ -384,6 +384,8 @@ class FormService
     {
         $aggregateData = $formRead->getPayload();
 
+        $isValid = true;
+
         // Execute onValidate listeners.
         foreach ($aggregateData['items'] as $item) {
             $itemClass = $this->getItemClass($item['itemName']);
@@ -395,11 +397,11 @@ class FormService
             }
 
             if ($itemForm instanceof ItemInterface && !$itemForm->onValidate($data, $item['data'], $formRead, $form)) {
-                break;
+                $isValid = false;
             }
         }
 
-        return true;
+        return $isValid;
     }
 
     private function onSubmit($form, FormRead $formRead, array $data): bool
