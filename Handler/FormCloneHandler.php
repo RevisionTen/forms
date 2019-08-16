@@ -52,9 +52,9 @@ final class FormCloneHandler extends FormBaseHandler implements HandlerInterface
             $originalAggregate->setVersion($aggregate->getVersion() ?? 1);
             $originalAggregate->setStreamVersion($aggregate->getStreamVersion() ?? 1);
             $originalAggregate->setSnapshotVersion(null);
-            $originalAggregate->setCreated(new DateTimeImmutable());
-            $originalAggregate->setModified(new DateTimeImmutable());
-            $originalAggregate->setHistory([]);
+            $originalAggregate->setCreated($aggregate->getCreated());
+            $originalAggregate->setModified($aggregate->getModified());
+            $originalAggregate->setHistory($aggregate->getHistory());
 
             $aggregate = $originalAggregate;
         }
