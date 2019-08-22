@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormEditItemCommand;
+use RevisionTen\CQRS\Exception\CommandValidationException;
 use RevisionTen\Forms\Event\FormEditItemEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
 use RevisionTen\CQRS\Interfaces\CommandInterface;
 use RevisionTen\CQRS\Interfaces\EventInterface;
 use RevisionTen\CQRS\Interfaces\HandlerInterface;
-use RevisionTen\CQRS\Message\Message;
+use function is_string;
 
 final class FormEditItemHandler extends FormBaseHandler implements HandlerInterface
 {
@@ -20,12 +20,12 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
      *
      * @var Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         if (isset($payload['data']['name'])) {
-            // Clean the name to only contrain lowercase letters.
+            // Clean the name to only contain lowercase letters.
             $payload['data']['name'] = strtolower(preg_replace('/[^A-Za-z0-9]/', '', $payload['data']['name']));
         }
 
@@ -34,7 +34,7 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
         $uuid = $payload['uuid'];
 
         // A function that updates the items data by merging it with the new data.
-        $updateDataFunction = function (&$item, &$collection) use ($data) {
+        $updateDataFunction = static function (&$item, &$collection) use ($data) {
             $item['data'] = array_merge($item['data'], $data);
         };
         self::onItem($aggregate, $uuid, $updateDataFunction);
@@ -45,17 +45,15 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormEditItemCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormEditItemEvent($command);
+        return new FormEditItemEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**
@@ -68,39 +66,33 @@ final class FormEditItemHandler extends FormBaseHandler implements HandlerInterf
         $payload = $command->getPayload();
         // The uuid to edit.
         $uuid = $payload['uuid'] ?? null;
-        $item = \is_string($uuid) ? self::getItem($aggregate, $uuid) : false;
+        $item = is_string($uuid) ? self::getItem($aggregate, $uuid) : false;
 
         if (null === $uuid) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'No uuid to edit is set',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         if (!isset($payload['data'])) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'No data set',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         if (!$item) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'Item with this uuid was not found '.$uuid,
                 CODE_CONFLICT,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         return true;

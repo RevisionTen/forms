@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormAddItemCommand;
+use RevisionTen\CQRS\Exception\CommandValidationException;
 use RevisionTen\Forms\Event\FormAddItemEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
 use RevisionTen\CQRS\Interfaces\CommandInterface;
 use RevisionTen\CQRS\Interfaces\EventInterface;
 use RevisionTen\CQRS\Interfaces\HandlerInterface;
-use RevisionTen\CQRS\Message\Message;
+use function is_string;
 
 final class FormAddItemHandler extends FormBaseHandler implements HandlerInterface
 {
@@ -20,9 +20,9 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
      *
      * @var Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         if (isset($payload['data']['name'])) {
             // Clean the name to only contain lowercase letters.
@@ -34,7 +34,7 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
 
         // Build item data.
         $newItem = [
-            'uuid' => $command->getUuid(),
+            'uuid' => $event->getCommandUuid(),
             'itemName' => $itemName,
             'data' => $data,
         ];
@@ -42,9 +42,9 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
         // Add to items.
         $parentUuid = $payload['parent'] ?? null;
 
-        if ($parentUuid && \is_string($parentUuid)) {
+        if ($parentUuid && is_string($parentUuid)) {
             // A function that add the new item to the target parent.
-            $addItemFunction = function (&$item, &$collection) use ($newItem) {
+            $addItemFunction = static function (&$item, &$collection) use ($newItem) {
                 if (!isset($item['items'])) {
                     $item['items'] = [];
                 }
@@ -62,17 +62,15 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormAddItemCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormAddItemEvent($command);
+        return new FormAddItemEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**
@@ -83,25 +81,21 @@ final class FormAddItemHandler extends FormBaseHandler implements HandlerInterfa
         $payload = $command->getPayload();
 
         if (!isset($payload['itemName'])) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'No item type set',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         if (!isset($payload['data'])) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'No data set',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         return true;

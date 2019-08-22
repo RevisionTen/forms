@@ -27,19 +27,24 @@ services:
     RevisionTen\Forms\Controller\TrackingController:
         autowire: true
         autoconfigure: true
+
     RevisionTen\Forms\Form\Items\EntityItem:
         autoconfigure: true
         autowire: true
         public: true
         tags: [form.type]
+
     RevisionTen\Forms\Services\FormService:
         autowire: true
         arguments:
             $config: '%forms%'
-    RevisionTen\Forms\Services\SenderService:
+
+    RevisionTen\Forms\EventSubscriber\:
+        resource: '../../EventSubscriber/*'
         autowire: true
-    RevisionTen\Forms\Listener\:
-        resource: '../../Listener/*'
-        exclude: '../../Listener/{FormBaseListener.php}'
+        autoconfigure: true
+
+    # Command handlers.
+    RevisionTen\Forms\Handler\FormCloneHandler:
+        autowire: true
         public: true
-        autowire: true

@@ -4,25 +4,37 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormCloneCommand;
+use DateTimeImmutable;
+use RevisionTen\CQRS\Exception\CommandValidationException;
+use RevisionTen\CQRS\Services\AggregateFactory;
 use RevisionTen\Forms\Event\FormCloneEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
 use RevisionTen\CQRS\Interfaces\CommandInterface;
 use RevisionTen\CQRS\Interfaces\EventInterface;
 use RevisionTen\CQRS\Interfaces\HandlerInterface;
-use RevisionTen\CQRS\Message\Message;
 
 final class FormCloneHandler extends FormBaseHandler implements HandlerInterface
 {
+    /** @var AggregateFactory */
+    private $aggregateFactory;
+
+    /**
+     * PageCloneHandler constructor.
+     *
+     * @param \RevisionTen\CQRS\Services\AggregateFactory $aggregateFactory
+     */
+    public function __construct(AggregateFactory $aggregateFactory)
+    {
+        $this->aggregateFactory = $aggregateFactory;
+    }
+
     /**
      * {@inheritdoc}
-     *
-     * @var Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         $originalUuid = $payload['originalUuid'];
         $originalVersion = $payload['originalVersion'];
@@ -40,9 +52,9 @@ final class FormCloneHandler extends FormBaseHandler implements HandlerInterface
             $originalAggregate->setVersion($aggregate->getVersion() ?? 1);
             $originalAggregate->setStreamVersion($aggregate->getStreamVersion() ?? 1);
             $originalAggregate->setSnapshotVersion(null);
-            $originalAggregate->setCreated(new \DateTimeImmutable());
-            $originalAggregate->setModified(new \DateTimeImmutable());
-            $originalAggregate->setHistory([]);
+            $originalAggregate->setCreated($aggregate->getCreated());
+            $originalAggregate->setModified($aggregate->getModified());
+            $originalAggregate->setHistory($aggregate->getHistory());
 
             $aggregate = $originalAggregate;
         }
@@ -53,17 +65,15 @@ final class FormCloneHandler extends FormBaseHandler implements HandlerInterface
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormCloneCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormCloneEvent($command);
+        return new FormCloneEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**
@@ -74,25 +84,21 @@ final class FormCloneHandler extends FormBaseHandler implements HandlerInterface
         $payload = $command->getPayload();
 
         if (0 !== $aggregate->getVersion()) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'Aggregate already exists',
                 CODE_CONFLICT,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         if (empty($payload['originalUuid']) || empty($payload['originalVersion'])) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'You must provide an original uuid and version',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         return true;

@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Event;
 
-use RevisionTen\Forms\Command\FormCreateCommand;
-use RevisionTen\Forms\Listener\FormCreateListener;
-use RevisionTen\CQRS\Event\Event;
+use RevisionTen\CQRS\Event\AggregateEvent;
 use RevisionTen\CQRS\Interfaces\EventInterface;
+use RevisionTen\Forms\Handler\FormCreateHandler;
+use RevisionTen\Forms\Model\Form;
 
-class FormCreateEvent extends Event implements EventInterface
+class FormCreateEvent extends AggregateEvent implements EventInterface
 {
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
+    public static function getAggregateClass(): string
     {
-        return FormCreateCommand::class;
+        return Form::class;
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function getListenerClass(): string
+    public static function getHandlerClass(): string
     {
-        return FormCreateListener::class;
+        return FormCreateHandler::class;
     }
 
     /**
@@ -33,13 +33,5 @@ class FormCreateEvent extends Event implements EventInterface
     public function getMessage(): string
     {
         return 'Form created';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function getCode(): int
-    {
-        return CODE_CREATED;
     }
 }

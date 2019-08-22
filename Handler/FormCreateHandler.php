@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormCreateCommand;
+use ReflectionObject;
+use ReflectionProperty;
+use RevisionTen\CQRS\Exception\CommandValidationException;
 use RevisionTen\Forms\Event\FormCreateEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
 use RevisionTen\CQRS\Interfaces\CommandInterface;
 use RevisionTen\CQRS\Interfaces\EventInterface;
 use RevisionTen\CQRS\Interfaces\HandlerInterface;
-use RevisionTen\CQRS\Message\Message;
 
 final class FormCreateHandler extends FormBaseHandler implements HandlerInterface
 {
@@ -20,14 +21,14 @@ final class FormCreateHandler extends FormBaseHandler implements HandlerInterfac
      *
      * @var Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         // Change Aggregate state.
         // Get each public property from the aggregate and update it If a new value exists in the payload.
-        $reflect = new \ReflectionObject($aggregate);
-        foreach ($reflect->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
+        $reflect = new ReflectionObject($aggregate);
+        foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             $propertyName = $property->getName();
             if (array_key_exists($propertyName, $payload)) {
                 $aggregate->{$propertyName} = $payload[$propertyName];
@@ -40,17 +41,15 @@ final class FormCreateHandler extends FormBaseHandler implements HandlerInterfac
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormCreateCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormCreateEvent($command);
+        return new FormCreateEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**
@@ -61,25 +60,21 @@ final class FormCreateHandler extends FormBaseHandler implements HandlerInterfac
         $payload = $command->getPayload();
 
         if (0 !== $aggregate->getVersion()) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'Aggregate already exists',
                 CODE_CONFLICT,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         if (empty($payload['title'])) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'You must enter a title',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         return true;
