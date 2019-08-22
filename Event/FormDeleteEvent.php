@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Event;
 
-use RevisionTen\Forms\Command\FormDeleteCommand;
-use RevisionTen\Forms\Listener\FormDeleteListener;
-use RevisionTen\CQRS\Event\Event;
+use RevisionTen\CQRS\Event\AggregateEvent;
 use RevisionTen\CQRS\Interfaces\EventInterface;
+use RevisionTen\Forms\Handler\FormDeleteHandler;
+use RevisionTen\Forms\Model\Form;
 
-class FormDeleteEvent extends Event implements EventInterface
+class FormDeleteEvent extends AggregateEvent implements EventInterface
 {
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
+    public static function getAggregateClass(): string
     {
-        return FormDeleteCommand::class;
+        return Form::class;
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function getListenerClass(): string
+    public static function getHandlerClass(): string
     {
-        return FormDeleteListener::class;
+        return FormDeleteHandler::class;
     }
 
     /**
@@ -33,13 +33,5 @@ class FormDeleteEvent extends Event implements EventInterface
     public function getMessage(): string
     {
         return 'Form deleted';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function getCode(): int
-    {
-        return CODE_OK;
     }
 }

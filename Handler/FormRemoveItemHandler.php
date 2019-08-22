@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormRemoveItemCommand;
+use RevisionTen\CQRS\Exception\CommandValidationException;
 use RevisionTen\Forms\Event\FormRemoveItemEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
 use RevisionTen\CQRS\Interfaces\CommandInterface;
 use RevisionTen\CQRS\Interfaces\EventInterface;
 use RevisionTen\CQRS\Interfaces\HandlerInterface;
-use RevisionTen\CQRS\Message\Message;
+use function is_string;
 
 final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInterface
 {
@@ -20,16 +20,16 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
      *
      * @param Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         $uuid = $payload['uuid'];
 
         // A function that removes a item from its parent.
-        $removeAndRebase = function (&$collection, $uuid) {
+        $removeAndRebase = static function (&$collection, $uuid) {
             // Remove the item by filtering the items array.
-            $collection = array_filter($collection, function ($item) use ($uuid) {
+            $collection = array_filter($collection, static function ($item) use ($uuid) {
                 return $uuid !== $item['uuid'];
             });
 
@@ -41,7 +41,7 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
         $removeAndRebase($aggregate->items, $uuid);
 
         // Remove from children.
-        $removeItemFunction = function (&$item, &$collection) use ($removeAndRebase) {
+        $removeItemFunction = static function (&$item, &$collection) use ($removeAndRebase) {
             $removeAndRebase($collection, $item['uuid']);
         };
         self::onItem($aggregate, $uuid, $removeItemFunction);
@@ -52,17 +52,15 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormRemoveItemCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormRemoveItemEvent($command);
+        return new FormRemoveItemEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**
@@ -75,28 +73,24 @@ final class FormRemoveItemHandler extends FormBaseHandler implements HandlerInte
         $payload = $command->getPayload();
         // The uuid to remove.
         $uuid = $payload['uuid'] ?? null;
-        $item = \is_string($uuid) ? self::getItem($aggregate, $uuid) : false;
+        $item = is_string($uuid) ? self::getItem($aggregate, $uuid) : false;
 
         if (null === $uuid) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'No uuid to remove is set',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         if (!$item) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'Item with this uuid was not found',
                 CODE_CONFLICT,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         return true;

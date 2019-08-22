@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Handler;
 
-use RevisionTen\Forms\Command\FormShiftItemCommand;
+use RevisionTen\CQRS\Exception\CommandValidationException;
 use RevisionTen\Forms\Event\FormShiftItemEvent;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\CQRS\Interfaces\AggregateInterface;
 use RevisionTen\CQRS\Interfaces\CommandInterface;
 use RevisionTen\CQRS\Interfaces\EventInterface;
 use RevisionTen\CQRS\Interfaces\HandlerInterface;
-use RevisionTen\CQRS\Message\Message;
+use function array_slice;
+use function count;
+use function is_string;
 
 final class FormShiftItemHandler extends FormBaseHandler implements HandlerInterface
 {
@@ -25,11 +27,11 @@ final class FormShiftItemHandler extends FormBaseHandler implements HandlerInter
      */
     private static function down(array $array, int $item): array
     {
-        if (\count($array) - 1 > $item) {
-            $b = \array_slice($array, 0, $item, true);
+        if (count($array) - 1 > $item) {
+            $b = array_slice($array, 0, $item, true);
             $b[] = $array[$item + 1];
             $b[] = $array[$item];
-            $b += \array_slice($array, $item + 2, \count($array), true);
+            $b += array_slice($array, $item + 2, count($array), true);
 
             return $b;
         }
@@ -47,11 +49,11 @@ final class FormShiftItemHandler extends FormBaseHandler implements HandlerInter
      */
     private static function up(array $array, int $item): array
     {
-        if ($item > 0 && $item < \count($array)) {
-            $b = \array_slice($array, 0, $item - 1, true);
+        if ($item > 0 && $item < count($array)) {
+            $b = array_slice($array, 0, $item - 1, true);
             $b[] = $array[$item];
             $b[] = $array[$item - 1];
-            $b += \array_slice($array, $item + 1, \count($array), true);
+            $b += array_slice($array, $item + 1, count($array), true);
 
             return $b;
         }
@@ -64,15 +66,15 @@ final class FormShiftItemHandler extends FormBaseHandler implements HandlerInter
      *
      * @var Form $aggregate
      */
-    public function execute(CommandInterface $command, AggregateInterface $aggregate): AggregateInterface
+    public function execute(EventInterface $event, AggregateInterface $aggregate): AggregateInterface
     {
-        $payload = $command->getPayload();
+        $payload = $event->getPayload();
 
         $uuid = $payload['uuid'];
         $direction = $payload['direction'];
 
         // A function that shifts all matching items in a provided direction.
-        $shiftFunction = function (&$item, &$collection) use ($direction, $uuid) {
+        $shiftFunction = static function (&$item, &$collection) use ($direction, $uuid) {
             if (null !== $collection) {
                 // Get the key of the item that will shift.
                 $itemKey = null;
@@ -99,17 +101,15 @@ final class FormShiftItemHandler extends FormBaseHandler implements HandlerInter
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
-    {
-        return FormShiftItemCommand::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function createEvent(CommandInterface $command): EventInterface
     {
-        return new FormShiftItemEvent($command);
+        return new FormShiftItemEvent(
+            $command->getAggregateUuid(),
+            $command->getUuid(),
+            $command->getOnVersion() + 1,
+            $command->getUser(),
+            $command->getPayload()
+        );
     }
 
     /**
@@ -122,39 +122,33 @@ final class FormShiftItemHandler extends FormBaseHandler implements HandlerInter
         $payload = $command->getPayload();
         // The uuid to remove.
         $uuid = $payload['uuid'] ?? null;
-        $item = \is_string($uuid) ? self::getItem($aggregate, $uuid) : false;
+        $item = is_string($uuid) ? self::getItem($aggregate, $uuid) : false;
 
         if (null === $uuid) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'No uuid to shift is set',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         if (!$item) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'Item with this uuid was not found '.$uuid,
                 CODE_CONFLICT,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         if (!isset($payload['direction']) || ('up' !== $payload['direction'] && 'down' !== $payload['direction'])) {
-            $this->messageBus->dispatch(new Message(
+            throw new CommandValidationException(
                 'Shift direction is not set',
                 CODE_BAD_REQUEST,
-                $command->getUuid(),
-                $command->getAggregateUuid()
-            ));
-
-            return false;
+                NULL,
+                $command
+            );
         }
 
         return true;

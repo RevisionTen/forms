@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Event;
 
-use RevisionTen\Forms\Command\FormAddItemCommand;
-use RevisionTen\Forms\Listener\FormAddItemListener;
-use RevisionTen\CQRS\Event\Event;
+use RevisionTen\CQRS\Event\AggregateEvent;
 use RevisionTen\CQRS\Interfaces\EventInterface;
+use RevisionTen\Forms\Handler\FormAddItemHandler;
+use RevisionTen\Forms\Model\Form;
 
-class FormAddItemEvent extends Event implements EventInterface
+class FormAddItemEvent extends AggregateEvent implements EventInterface
 {
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
+    public static function getAggregateClass(): string
     {
-        return FormAddItemCommand::class;
+        return Form::class;
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function getListenerClass(): string
+    public static function getHandlerClass(): string
     {
-        return FormAddItemListener::class;
+        return FormAddItemHandler::class;
     }
 
     /**
@@ -33,13 +33,5 @@ class FormAddItemEvent extends Event implements EventInterface
     public function getMessage(): string
     {
         return 'Item added to Form';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function getCode(): int
-    {
-        return CODE_OK;
     }
 }

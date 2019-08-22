@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Event;
 
-use RevisionTen\Forms\Command\FormRemoveItemCommand;
-use RevisionTen\Forms\Listener\FormRemoveItemListener;
-use RevisionTen\CQRS\Event\Event;
+use RevisionTen\CQRS\Event\AggregateEvent;
 use RevisionTen\CQRS\Interfaces\EventInterface;
+use RevisionTen\Forms\Handler\FormRemoveItemHandler;
+use RevisionTen\Forms\Model\Form;
 
-final class FormRemoveItemEvent extends Event implements EventInterface
+final class FormRemoveItemEvent extends AggregateEvent implements EventInterface
 {
     /**
      * {@inheritdoc}
      */
-    public static function getCommandClass(): string
+    public static function getAggregateClass(): string
     {
-        return FormRemoveItemCommand::class;
+        return Form::class;
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function getListenerClass(): string
+    public static function getHandlerClass(): string
     {
-        return FormRemoveItemListener::class;
+        return FormRemoveItemHandler::class;
     }
 
     /**
@@ -33,13 +33,5 @@ final class FormRemoveItemEvent extends Event implements EventInterface
     public function getMessage(): string
     {
         return 'Item removed from Form';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function getCode(): int
-    {
-        return CODE_OK;
     }
 }
