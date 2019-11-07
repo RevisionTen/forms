@@ -173,9 +173,12 @@ class FormService
 
         $formOptions = [
             'action' => '?formular=abgeschickt',
-            'validation_groups' => !$ignore_validation,
             'csrf_protection' => !$formRead->getDisableCsrfProtection(),
         ];
+
+        if ($ignore_validation) {
+            $formOptions['validation_groups'] = false;
+        }
 
         $formBuilder = $this->formFactory->createNamedBuilder($formName, FormType::class, $data, $formOptions);
 
