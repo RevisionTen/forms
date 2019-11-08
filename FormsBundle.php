@@ -7,19 +7,19 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class FormsBundle extends Bundle
 {
-    public const VERSION = '2.0.2';
+    public const VERSION = '2.0.3';
 
     /**
      * {@inheritdoc}
      */
-    public function boot()
+    public function boot(): void
     {
     }
 
     /**
      * {@inheritdoc}
      */
-    public function build(ContainerBuilder $container)
+    public function build(ContainerBuilder $container): void
     {
     }
 }
