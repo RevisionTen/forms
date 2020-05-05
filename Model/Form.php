@@ -56,6 +56,9 @@ final class Form extends Aggregate
     /** @var bool */
     public $disableCsrfProtection = false;
 
+    /** @var bool */
+    public $scrollToSuccessText = false;
+
     /** @var array */
     public $items;
 }

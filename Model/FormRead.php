@@ -134,6 +134,12 @@ class FormRead
     private $disableCsrfProtection;
 
     /**
+     * @var bool|null
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $scrollToSuccessText;
+
+    /**
      * @var \DateTime
      * @ORM\Column(type="datetime")
      */
@@ -501,6 +507,26 @@ class FormRead
     public function setDisableCsrfProtection(?bool $disableCsrfProtection): self
     {
         $this->disableCsrfProtection = (bool) $disableCsrfProtection;
+
+        return $this;
+    }
+
+    /**
+     * @return bool|null
+     */
+    public function getScrollToSuccessText(): ?bool
+    {
+        return $this->scrollToSuccessText;
+    }
+
+    /**
+     * @param bool|null $scrollToSuccessText
+     *
+     * @return FormRead
+     */
+    public function setScrollToSuccessText(?bool $scrollToSuccessText): self
+    {
+        $this->scrollToSuccessText = (bool) $scrollToSuccessText;
 
         return $this;
     }

@@ -8,6 +8,25 @@
     {% endfor %}
 {% endfor %}
 
+{% if scrollToSuccessText is defined and scrollToSuccessText and form.vars.submitted %}
+    {% set formScrollAnchor = 'anchor-'~form.vars.full_name %}
+    <div id="{{ formScrollAnchor }}"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                var bodyRect = document.body.getBoundingClientRect();
+                var elemRect = document.getElementById('{{ formScrollAnchor }}').getBoundingClientRect();
+                var offset  = elemRect.top - bodyRect.top;
+
+                window.scrollTo({
+                    top: offset - 140,
+                    behavior: 'smooth'
+                });
+            }, 250);
+        });
+    </script>
+{% endif %}
+
 {% if form.vars.submitted == false or form.vars.valid == false or ignore_validation %}
     {{ form(form) }}
 {% endif %}

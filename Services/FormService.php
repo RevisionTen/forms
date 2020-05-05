@@ -127,6 +127,8 @@ class FormService
      * Update the FormRead entity for the admin backend.
      *
      * @param string $formUuid
+     *
+     * @throws Exception
      */
     public function updateFormRead(string $formUuid): void
     {
@@ -140,7 +142,7 @@ class FormService
         $formRead->setVersion($aggregate->getStreamVersion());
         $formRead->setUuid($formUuid);
 
-        $formData = json_decode(json_encode($aggregate), true);
+        $formData = json_decode(json_encode($aggregate, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
         $formRead->setPayload($formData);
 
         $formRead->setTitle($aggregate->title);
@@ -157,6 +159,7 @@ class FormService
         $formRead->setSaveSubmissions($aggregate->saveSubmissions);
         $formRead->setTrackSubmissions($aggregate->trackSubmissions);
         $formRead->setDisableCsrfProtection($aggregate->disableCsrfProtection);
+        $formRead->setScrollToSuccessText($aggregate->scrollToSuccessText);
         $formRead->setCreated($aggregate->getCreated());
         $formRead->setModified($aggregate->getModified());
 
@@ -186,7 +189,9 @@ class FormService
      */
     public function getForm(string $formUuid, $data = null, bool $ignore_validation = false): FormInterface
     {
-        /** @var FormRead $formRead */
+        /**
+         * @var FormRead $formRead
+         */
         $formRead = $this->entityManager->getRepository(FormRead::class)->findOneBy(['uuid' => $formUuid]);
         $payload = $formRead->getPayload();
 
@@ -277,7 +282,9 @@ class FormService
     {
         $messages = [];
 
-        /** @var FormRead $formRead */
+        /**
+         * @var FormRead $formRead
+         */
         $formRead = $this->entityManager->getRepository(FormRead::class)->findOneBy(['uuid' => $formUuid]);
         $aggregateData = $formRead->getPayload();
 
@@ -295,7 +302,7 @@ class FormService
 
             // Display error If user is blocked.
             if ($isBlocked) {
-                $aggregateData = json_decode(json_encode($formRead->getPayload()), true);
+                $aggregateData = json_decode(json_encode($formRead->getPayload(), JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
                 $timeLimitMessage = $aggregateData['timeLimitMessage'] ?? $this->translator->trans('You have already submitted the form, please try again later');
                 if ($form->isSubmitted()) {
                     $form->addError(new FormError($timeLimitMessage));
@@ -311,7 +318,9 @@ class FormService
             if ($isBlocked === false && $form->isSubmitted()) {
                 // Get the full submitted form data.
                 $submittedData = array_map(static function ($field) {
-                    /** @var FormInterface $field */
+                    /**
+                     * @var FormInterface $field
+                     */
                     return $field->getData();
                 }, $form->all());
                 $data = array_merge($defaultData, $submittedData);
@@ -424,6 +433,7 @@ class FormService
             'form' => $form,
             'formView' => $form->createView(),
             'messages' => $messages,
+            'scrollToSuccessText' => (bool) $formRead->getScrollToSuccessText(),
         ];
     }
 
@@ -528,9 +538,11 @@ class FormService
 
     /**
      * @param string $emailTemplate
-     * @param bool $isHtml
-     * @param $data
+     * @param bool   $isHtml
+     * @param        $data
+     *
      * @return array|null
+     * @throws Exception
      */
     private function renderEmailTemplate(string $emailTemplate, bool $isHtml, $data): ?array
     {
@@ -553,7 +565,7 @@ class FormService
         // If rendering the twig template fails json_encode the raw form data and send as plain text with error attached.
         if (null === $body && is_object($error) && method_exists($error, 'getRawMessage')) {
             $body = 'An Error occurred: '.$error->getRawMessage()."\nPlease check your Email-Template at line ".$error->getTemplateLine().". \nHere is the raw form submission:";
-            $body .= "\n\n".json_encode($data);
+            $body .= "\n\n". json_encode($data, JSON_THROW_ON_ERROR);
             $isHtml = false;
         }
 
@@ -589,11 +601,12 @@ class FormService
      * @param string $propertyName
      *
      * @return mixed|null
+     * @throws Exception
      */
     private function getField(array $payload, array $data, string $propertyName)
     {
         $isField = false;
-        $payload = json_decode(json_encode($payload), true);
+        $payload = json_decode(json_encode($payload, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
         if ($payload['items'] && is_array($payload['items']) && count($payload['items']) > 0) {
             foreach ($payload['items'] as $item) {
                 if (isset($item['data'][$propertyName]) && $item['data'][$propertyName]) {
@@ -611,16 +624,15 @@ class FormService
      */
     public function getFormSubmissions(int $id): array
     {
-        /** @var FormSubmission[] $formSubmissions */
+        /**
+         * @var FormSubmission[] $formSubmissions
+         */
         $formSubmissions = $this->entityManager->getRepository(FormSubmission::class)->findBy([
             'form' => $id,
         ]);
 
-        $payloads = array_map(static function ($formSubmission) {
-            /** @var FormSubmission $formSubmission */
+        return array_map(static function ($formSubmission) {
             return $formSubmission->getPayload();
         }, $formSubmissions);
-
-        return $payloads;
     }
 }
