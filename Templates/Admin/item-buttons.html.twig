@@ -7,8 +7,8 @@
 {% import _self as forms %}
 
 {% if config.item_types is defined %}
-    <div class="btn-group">
-        <span class="btn btn-secondary btn-sm text-bold" style="text-decoration: none;">{{ 'Add field'|trans }}</span>
+    <div>
+        <span class="btn btn-secondary btn-sm text-bold" style="text-decoration: none;">{{ 'Add field'|trans }}</span><br/>
 
         {% for name, itemType in config.item_types %}
             {{ forms.button(uuid, version, name, itemType.icon) }}

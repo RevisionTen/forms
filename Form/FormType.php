@@ -134,6 +134,11 @@ class FormType extends AbstractType
             'required' => false,
         ]);
 
+        $builder->add('scrollToSuccessText', CheckboxType::class, [
+            'label' => 'Scroll to success text',
+            'required' => false,
+        ]);
+
         $builder->add('save', SubmitType::class, [
             'label' => 'Save',
         ]);
