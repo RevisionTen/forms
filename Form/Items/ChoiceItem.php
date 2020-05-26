@@ -16,7 +16,7 @@ class ChoiceItem extends Item
     /**
      * {@inheritdoc}
      */
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         parent::buildForm($builder, $options);
 
@@ -76,8 +76,6 @@ class ChoiceItem extends Item
         }
 
         $choices = explode("\n", $item['choices']);
-
-        // TODO: array map.
         $parsedChoices = [];
         foreach ($choices as $key => $line) {
             if (false !== strpos($line, '|')) {
@@ -86,7 +84,6 @@ class ChoiceItem extends Item
                 $label = $line;
                 $key = $line;
             }
-
             $parsedChoices[trim((string) $label)] = trim((string) $key);
         }
 
@@ -100,20 +97,20 @@ class ChoiceItem extends Item
             'placeholder' => $item['placeholder'] ?? $item['label'],
         ];
 
+        // Make the emails unreadable in the frontend.
+        if ($item['isReceiver']) {
+            $options['choice_value'] = static function ($value) {
+                return !empty($value) ? md5($value) : null;
+            };
+        }
+
         if ($item['expanded']) {
-            if ($item['multiple']) {
-                $options['label_attr'] = [
-                    'class' => 'checkbox-custom',
-                ];
-            } else {
-                $options['label_attr'] = [
-                    'class' => 'radio-custom',
-                ];
-            }
+            $options['label_attr'] = [
+                'class' => ($item['multiple'] ? 'checkbox-custom' : 'radio-custom'),
+            ];
         } elseif (!$item['multiple'])  {
             $options['attr']['class'] = 'custom-select '.($options['attr']['class'] ?? '');
         }
-
 
         if (isset($item['required']) && $item['required']) {
             $options['constraints'] = new NotBlank();
