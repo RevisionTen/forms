@@ -81,15 +81,15 @@ class Item extends AbstractType implements ItemInterface
             'aria-label' => $item['label'],
         ];
 
-        if (isset($item['read_only']) && $item['read_only']) {
+        if (!empty($item['read_only'])) {
             $attributes['readonly'] = true;
         }
 
-        if (isset($item['placeholder']) && $item['placeholder']) {
+        if (!empty($item['placeholder'])) {
             $attributes['placeholder'] = $item['placeholder'];
         }
 
-        if (isset($item['twig_variable']) && $item['twig_variable']) {
+        if (!empty($item['twig_variable'])) {
             $attributes['twig_variable'] = $item['twig_variable'];
         }
 
