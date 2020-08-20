@@ -98,7 +98,7 @@ class ChoiceItem extends Item
         ];
 
         // Make the emails unreadable in the frontend.
-        if ($item['isReceiver']) {
+        if (isset($item['isReceiver']) && $item['isReceiver']) {
             $options['choice_value'] = static function ($value) {
                 return !empty($value) ? md5($value) : null;
             };
