@@ -142,7 +142,7 @@ class FormService
         $formRead->setVersion($aggregate->getStreamVersion());
         $formRead->setUuid($formUuid);
 
-        $formData = json_decode(json_encode($aggregate, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
+        $formData = json_decode(json_encode($aggregate), true, 512);
         $formRead->setPayload($formData);
 
         $formRead->setTitle($aggregate->title);
@@ -302,7 +302,7 @@ class FormService
 
             // Display error If user is blocked.
             if ($isBlocked) {
-                $aggregateData = json_decode(json_encode($formRead->getPayload(), JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
+                $aggregateData = json_decode(json_encode($formRead->getPayload()), true, 512);
                 $timeLimitMessage = $aggregateData['timeLimitMessage'] ?? $this->translator->trans('You have already submitted the form, please try again later');
                 if ($form->isSubmitted()) {
                     $form->addError(new FormError($timeLimitMessage));
@@ -565,7 +565,7 @@ class FormService
         // If rendering the twig template fails json_encode the raw form data and send as plain text with error attached.
         if (null === $body && is_object($error) && method_exists($error, 'getRawMessage')) {
             $body = 'An Error occurred: '.$error->getRawMessage()."\nPlease check your Email-Template at line ".$error->getTemplateLine().". \nHere is the raw form submission:";
-            $body .= "\n\n". json_encode($data, JSON_THROW_ON_ERROR);
+            $body .= "\n\n". json_encode($data);
             $isHtml = false;
         }
 
@@ -606,7 +606,7 @@ class FormService
     private function getField(array $payload, array $data, string $propertyName)
     {
         $isField = false;
-        $payload = json_decode(json_encode($payload, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
+        $payload = json_decode(json_encode($payload), true, 512);
         if ($payload['items'] && is_array($payload['items']) && count($payload['items']) > 0) {
             foreach ($payload['items'] as $item) {
                 if (isset($item['data'][$propertyName]) && $item['data'][$propertyName]) {
