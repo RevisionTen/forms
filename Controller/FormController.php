@@ -135,7 +135,7 @@ class FormController extends AbstractController
 
                 if (is_array($value) && is_array($originalValue)) {
                     // Check if values arrays are identical.
-                    if (0 !== strcmp(json_encode($value, JSON_THROW_ON_ERROR), json_encode($originalValue, JSON_THROW_ON_ERROR))) {
+                    if (0 !== strcmp(json_encode($value), json_encode($originalValue))) {
                         // Arrays are not equal.
                         $equal = false;
                     }
@@ -338,7 +338,7 @@ class FormController extends AbstractController
          */
         $formAggregate = $this->aggregateFactory->build($formUuid, Form::class, null, $user->getId());
         // Convert Aggregate to data array for form and remove properties we don't want changed.
-        $aggregateData = json_decode(json_encode($formAggregate, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
+        $aggregateData = json_decode(json_encode($formAggregate), true, 512);
 
         // Get item variables.
         $itemVariables = [];
