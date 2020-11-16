@@ -605,17 +605,29 @@ class FormService
      */
     private function getField(array $payload, array $data, string $propertyName)
     {
-        $isField = false;
         $payload = json_decode(json_encode($payload), true, 512);
+        $fieldData = null;
+
         if ($payload['items'] && is_array($payload['items']) && count($payload['items']) > 0) {
             foreach ($payload['items'] as $item) {
                 if (isset($item['data'][$propertyName]) && $item['data'][$propertyName]) {
-                    $isField = $item['data']['name'];
+                    $itemName = $item['itemName'] ?? null;
+                    $name = $item['data']['name'];
+
+                    $fieldData = $data[$name] ?? null;
+
+                    if ($itemName && ('isReceiver' === $propertyName || 'replyTo' === $propertyName)) {
+                        // Execute getEmail callback on form field data.
+                        $itemClass = $this->getItemClass($itemName);
+                        if (method_exists($itemClass, 'getEmail')) {
+                            $fieldData = $itemClass::getEmail($fieldData);
+                        }
+                    }
                 }
             }
         }
 
-        return $isField ? $data[$isField] : null;
+        return $fieldData;
     }
 
     /**

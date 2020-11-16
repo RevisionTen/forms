@@ -27,6 +27,15 @@ interface ItemInterface extends FormTypeInterface
     public static function getVariables(array $item): array;
 
     /**
+     * This method is called when the items form data is used as an email.
+     *
+     * @param mixed $itemData
+     *
+     * @return string|null
+     */
+    public static function getEmail($itemData): ?string;
+
+    /**
      * This method is called when the form is submitted after it was validated.
      * If this method returns false then the submission will be stopped.
      *
