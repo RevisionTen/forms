@@ -125,6 +125,14 @@ class Item extends AbstractType implements ItemInterface
     /**
      * {@inheritdoc}
      */
+    public static function getEmail($itemData): ?string
+    {
+        return $itemData;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function onSubmit(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool
     {
         return true;
