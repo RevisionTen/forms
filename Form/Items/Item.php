@@ -75,6 +75,14 @@ class Item extends AbstractType implements ItemInterface
     /**
      * {@inheritdoc}
      */
+    public function buildItem(FormBuilderInterface $builder, array $itemOptions)
+    {
+        self::getItem($builder, $itemOptions);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public static function getItem(FormBuilderInterface $builder, array $item)
     {
         $attributes = [

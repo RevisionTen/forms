@@ -13,11 +13,20 @@ interface ItemInterface extends FormTypeInterface
 {
     /**
      * @param FormBuilderInterface $builder
-     * @param array                $item
+     * @param array                $itemOptions
      *
      * @return mixed
+     * @deprecated Use buildItem() instead.
      */
-    public static function getItem(FormBuilderInterface $builder, array $item);
+    public static function getItem(FormBuilderInterface $builder, array $itemOptions);
+
+    /**
+     * @param FormBuilderInterface $builder
+     * @param array $itemOptions
+     *
+     * @return void
+     */
+    public function buildItem(FormBuilderInterface $builder, array $itemOptions);
 
     /**
      * @param array $item
@@ -41,7 +50,7 @@ interface ItemInterface extends FormTypeInterface
      *
      * @param array         $data     the forms submitted data
      * @param array         $item     the item
-     * @param FormRead      $formRead the forms read entity
+     * @param ?FormRead      $formRead the forms read entity
      * @param FormInterface $form     the form
      *
      * @return bool
@@ -54,7 +63,7 @@ interface ItemInterface extends FormTypeInterface
      *
      * @param array         $data     the forms submitted data
      * @param array         $item     the item
-     * @param FormRead      $formRead the forms read entity
+     * @param ?FormRead      $formRead the forms read entity
      * @param FormInterface $form     the form
      *
      * @return bool

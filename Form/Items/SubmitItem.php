@@ -25,7 +25,7 @@ class SubmitItem extends Item
     /**
      * {@inheritdoc}
      */
-    public static function getItem(FormBuilderInterface $builder, array $item)
+    public function buildItem(FormBuilderInterface $builder, array $item)
     {
         $builder->add($item['name'], SubmitType::class, [
             'label' => $item['label'],
