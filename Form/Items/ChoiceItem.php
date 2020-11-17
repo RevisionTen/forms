@@ -53,7 +53,7 @@ class ChoiceItem extends Item
     /**
      * {@inheritdoc}
      */
-    public static function getItem(FormBuilderInterface $builder, array $item)
+    public function buildItem(FormBuilderInterface $builder, array $item)
     {
         $attributes = [
             'aria-label' => $item['label'],

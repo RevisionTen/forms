@@ -7,6 +7,8 @@ namespace RevisionTen\Forms\Services;
 use DateTime;
 use Doctrine\Common\Collections\Criteria;
 use Exception;
+use ReflectionException;
+use ReflectionMethod;
 use RevisionTen\Forms\Form\Items\TextItem;
 use RevisionTen\Forms\Interfaces\ItemInterface;
 use RevisionTen\Forms\Model\Form;
@@ -36,6 +38,7 @@ use function array_merge;
 use function array_values;
 use function count;
 use function explode;
+use function get_class;
 use function is_array;
 use function is_object;
 use function is_string;
@@ -182,10 +185,12 @@ class FormService
 
     /**
      * @param string $formUuid
-     * @param null   $data
-     * @param bool   $ignore_validation
+     * @param null $data
+     * @param bool $ignore_validation
      *
      * @return FormInterface
+     *
+     * @throws ReflectionException
      */
     public function getForm(string $formUuid, $data = null, bool $ignore_validation = false): FormInterface
     {
@@ -213,9 +218,22 @@ class FormService
 
         foreach ($payload['items'] as $item) {
             $itemClass = $this->getItemClass($item['itemName']);
+            // Get the form as a service or instantiate it.
+            try {
+                $itemForm = $this->container->get($itemClass);
+            } catch (ServiceNotFoundException $exception) {
+                $itemForm = new $itemClass();
+            }
 
-            if (method_exists($itemClass, 'getItem')) {
-                $itemClass::getItem($formBuilder, $item['data']);
+            // Check if the class implements the buildItem method, use fallback getItem method otherwise.
+            $reflector = new ReflectionMethod($itemForm, 'buildItem');
+            $isProto = ($reflector->getDeclaringClass()->getName() !== get_class($itemForm));
+
+            if ($isProto && method_exists($itemForm, 'getItem')) {
+                // Class does not implement buildItem() itself, call deprecated getItem instead.
+                $itemForm::getItem($formBuilder, $item['data']);
+            } elseif (method_exists($itemForm, 'buildItem')) {
+                $itemForm->buildItem($formBuilder, $item['data']);
             }
         }
 
