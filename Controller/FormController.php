@@ -71,7 +71,9 @@ class FormController extends AbstractController
 
     private TranslatorInterface $translator;
 
-    public function __construct(MessageBus $messageBus, CommandBus $commandBus, AggregateFactory $aggregateFactory, EntityManagerInterface $entityManager, FormService $formService, TranslatorInterface $translator)
+    private RequestStack $requestStack;
+
+    public function __construct(MessageBus $messageBus, CommandBus $commandBus, AggregateFactory $aggregateFactory, EntityManagerInterface $entityManager, FormService $formService, TranslatorInterface $translator, RequestStack $requestStack)
     {
         $this->messageBus = $messageBus;
         $this->commandBus = $commandBus;
@@ -79,6 +81,7 @@ class FormController extends AbstractController
         $this->entityManager = $entityManager;
         $this->formService = $formService;
         $this->translator = $translator;
+        $this->requestStack = $requestStack;
     }
 
     /**
@@ -627,9 +630,9 @@ class FormController extends AbstractController
      * @return Response
      * @throws Exception
      */
-    public function renderCmsForm(RequestStack $requestStack, string $formUuid, string $template = null, array $defaultData): Response
+    public function renderCmsForm(string $formUuid, string $template = null, array $defaultData): Response
     {
-        $request = $requestStack->getMainRequest();
+        $request = $this->requestStack->getMainRequest();
         $handledRequest = $this->formService->handleRequest($request, $formUuid, $defaultData);
 
         // Get the forms template.

@@ -320,15 +320,9 @@ class FormService
 
                     // Get CC Email.
                     $cc = $formRead->getEmailCC();
-                    if ($cc) {
-                        $message->cc(...self::getMailsFromString($cc));
-                    }
 
                     // Get BCC Email.
                     $bcc = $formRead->getEmailBCC();
-                    if ($bcc) {
-                        $message->bcc(...self::getMailsFromString($bcc));
-                    }
 
                     // Get ReplyTo Email.
                     $replyTo = $this->getField($aggregateData, $data, 'replyTo');
@@ -345,8 +339,10 @@ class FormService
                     }
 
                     // Set Reply To.
-                    $replyToAddress = new Address($replyTo, $replyToName);
-                    $message->replyTo($replyToAddress);
+                    if ($replyTo) {
+                        $replyToAddress = new Address($replyTo, $replyToName);
+                        $message->replyTo($replyToAddress);
+                    }
 
                     // Set Sender and From.
                     $sender = new Address($formRead->getSender(), $replyToName ?? 'Website');
@@ -370,7 +366,7 @@ class FormService
 
 
                     // Send different emails to main recipient and copy recipients.
-                    if (!empty($formRead->getEmailTemplateCopy())) {
+                    if (!empty($formRead->getEmailTemplateCopy()) && ($cc || $bcc)) {
                         $messageCc = clone $message;
 
                         // Use cc email template.
@@ -382,12 +378,17 @@ class FormService
                         }
 
                         // Send the CC message with different template only to (b)cc recipients.
-                        $messageCc->to(null);
+                        $messageCc->to($sender);
+                        $messageCc->cc(...$messageCc->getCc());
+                        $messageCc->bcc(...$messageCc->getCc());
                         $this->mailer->send($messageCc);
-
-                        // Send to default message only to main recipient.
-                        $message->cc(null);
-                        $message->bcc(null);
+                    } else {
+                        if ($cc) {
+                            $message->cc(...self::getMailsFromString($cc));
+                        }
+                        if ($bcc) {
+                            $message->bcc(...self::getMailsFromString($bcc));
+                        }
                     }
 
                     // Send the email with default template.
