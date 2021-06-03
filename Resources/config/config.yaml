@@ -1,8 +1,8 @@
 twig:
     paths:
-        '%kernel.project_dir%/vendor/revision-ten/forms/Resources/views': FORMS
+        '%kernel.project_dir%/vendor/revision-ten/forms/Resources/views': forms
     form_themes:
-          - '@FORMS/Frontend/form_theme.html.twig'
+          - '@forms/Frontend/form_theme.html.twig'
 
 framework:
     translator:

@@ -13,47 +13,47 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class TextItem extends Item
 {
-    /**
-     * {@inheritdoc}
-     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         parent::buildForm($builder, $options);
 
         $builder->add('placeholder', TextType::class, [
-            'label' => 'Placeholder',
+            'label' => 'forms.label.placeholder',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('min', NumberType::class, [
-            'label' => 'Min Length',
+            'label' => 'forms.label.min',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('max', NumberType::class, [
-            'label' => 'Max Length',
+            'label' => 'forms.label.max',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('isSubject', CheckboxType::class, [
-            'label' => 'Is Subject',
+            'label' => 'forms.label.isSubject',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('isFirstname', CheckboxType::class, [
-            'label' => 'Is Firstname',
+            'label' => 'forms.label.isFirstname',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('isName', CheckboxType::class, [
-            'label' => 'Is Name',
+            'label' => 'forms.label.isName',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildItem(FormBuilderInterface $builder, array $item)
     {
         $attributes = [

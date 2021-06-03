@@ -9,9 +9,6 @@ use Symfony\Component\Form\FormBuilderInterface;
 
 class SubmitItem extends Item
 {
-    /**
-     * {@inheritdoc}
-     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         parent::buildForm($builder, $options);
@@ -22,9 +19,6 @@ class SubmitItem extends Item
         $builder->remove('popover');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildItem(FormBuilderInterface $builder, array $item)
     {
         $builder->add($item['name'], SubmitType::class, [
@@ -32,9 +26,6 @@ class SubmitItem extends Item
         ]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getVariables(array $item): array
     {
         return [];

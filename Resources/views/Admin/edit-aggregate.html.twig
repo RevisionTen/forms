@@ -1,112 +1,182 @@
-{% extends '@EasyAdmin/default/layout.html.twig' %}
-{#% form_theme form 'bootstrap_3_layout.html.twig' %#}
+{% extends '@CMS/Backend/base.html.twig' %}
 
-{% block content_title %}
-    {{ 'Edit Form %title%'|trans({'%title%': formAggregate.title}) }}
+{% block tabs %}
+    <ul class="btn-group nav nav-pills" role="tablist">
+        <li class="btn-group nav-item" role="presentation">
+            <button class="btn-tab btn btn-sm btn-light active" data-bs-toggle="tab" data-bs-target="#fields" type="button" role="tab" aria-controls="fields" aria-selected="true">
+                {{ 'forms.label.fieldsTab'|trans({}, 'cms') }}
+            </button>
+        </li>
+        <li class="btn-group nav-item" role="presentation">
+            <button class="btn-tab btn btn-sm btn-light" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">
+                {{ 'forms.label.settingsTab'|trans({}, 'cms') }}
+            </button>
+        </li>
+    </ul>
+    <script>
+        // Sync duplicated tabs.
+        var tabEls = document.querySelectorAll('.btn-tab[data-bs-toggle="tab"]');
+        tabEls.forEach((tabEl) => {
+            tabEl.addEventListener('shown.bs.tab', function (event) {
+                let target = event.target.dataset.bsTarget;
+                tabEls.forEach((tabEl) => {
+                    tabEl.classList.remove('active');
+                });
+                var activeTabs = document.querySelectorAll('.btn-tab[data-bs-target="'+target+'"]');
+                activeTabs.forEach((tabEl) => {
+                    tabEl.classList.add('active');
+                });
+            })
+        });
+    </script>
 {% endblock %}
 
+{% block content %}
+    <div class="p-4">
 
-{% block flash_messages %}
-    {% set flashes = app.session.flashbag.all %}
-    {% if flashes is defined and flashes|length > 0 %}
-        <div class="container-fluid" style="padding-top: 2em;">
-            {% for label, messages in flashes %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ label }}">
-                        {{ message|trans|raw }}
-                    </div>
-                {% endfor %}
-            {% endfor %}
-        </div>
-    {% endif %}
-{% endblock flash_messages %}
-
-{% block main %}
-    <div>
-        <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active"><a href="#fields" aria-controls="fields" role="tab" data-toggle="tab">{{ 'Form Fields'|trans }}</a></li>
-            <li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">{{ 'Form Settings'|trans }}</a></li>
-        </ul>
-        <div class="tab-content box-default box">
-            <div role="tabpanel" class="tab-pane active box-body" id="fields">
-                <table class="table table-striped">
-                    <tr>
-                        <th>
-                            {{ 'Required'|trans }}
-                        </th>
-                        <th>
-                            {{ 'Label'|trans }}
-                        </th>
-                        <th>
-                            {{ 'Name'|trans }}
-                        </th>
-                        <th>
-                            {{ 'Type'|trans }}
-                        </th>
-                        <th>
-                            {{ 'Actions'|trans }}
-                        </th>
-                    </tr>
-                    {% for item in formAggregate.items %}
-                        {% set level = 0 %}
-                        {% include '@forms/Admin/edit-item.html.twig' %}
+        <div class="row">
+            <script type="text/javascript">
+              // Script to select all text in clicked DOM element.
+              function selectText(containerid) {
+                if (document.selection) {
+                  var range = document.body.createTextRange();
+                  range.moveToElementText(document.getElementById(containerid));
+                  range.select();
+                } else if (window.getSelection) {
+                  var range = document.createRange();
+                  range.selectNode(document.getElementById(containerid));
+                  window.getSelection().removeAllRanges();
+                  window.getSelection().addRange(range);
+                }
+              }
+            </script>
+            <div class="col-12">
+                <p>
+                    {{ 'forms.label.twigVars'|trans({}, 'cms') }}:<br/>
+                    {% for key, vars in itemVariables %}
+                        {% for var in vars %}
+                            <code id="var-{{ key~loop.index }}" onclick="selectText('var-{{ key~loop.index }}')" class="text-nowrap">{% verbatim %}{{{% endverbatim %} {{ var }} {% verbatim %}}}{% endverbatim %}</code>
+                        {% endfor %}
                     {% endfor %}
-                </table>
-                <hr/>
-                <div>
+                </p>
+            </div>
+        </div>
+
+        {{ form_rest(form) }}
+
+    </div>
+{% endblock %}
+
+{% block content_wrapper %}
+
+     {# Hide bootstrap tabs when they are inactive #}
+    <style>
+        .fade:not(.show) { display: none; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: flex; }
+    </style>
+
+    {% set tabClass = 'col flex-grow-1 overflow-auto flex-column tab-pane ' ~ contentClass %}
+
+    {# Settings form #}
+    {{ form_start(form, {
+        attr: {
+            class: 'content-form ' ~ tabClass,
+            style: 'max-height: 100vh',
+            id: 'settings',
+            role: 'tabpanel',
+        }
+    }) }}
+        <div class="sticky-top px-4 py-3 {{ contentHeaderClass }}">
+            <div class="row align-items-center">
+                <div class="col-4">
+                    {{ block('content_title') }}
+                </div>
+                <div class="col-4 text-center d-flex justify-content-center">
+                    {{ block('tabs') }}
+                </div>
+                {% set typeOptions = { attr: { class: 'btn btn-primary btn-sm' } } %}
+                {% if form.save is defined %}
+                    <div class="col-auto ms-auto content-actions">
+                        {{ form_widget(form.save, typeOptions) }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {{ block('content') }}
+    {{ form_end(form) }}
+
+    {# Content #}
+    <div id="fields" role="tabpanel" class="{{ tabClass }} show active" style="max-height: 100vh;">
+        <div class="sticky-top px-4 py-3 {{ contentHeaderClass }}">
+            <div class="row align-items-center">
+                <div class="col-4">
+                    {{ block('content_title') }}
+                </div>
+                <div class="col-4 text-center d-flex justify-content-center">
+                    {{ block('tabs') }}
+                </div>
+                <div class="col-auto ms-auto">
                     {% set version = formAggregate.streamVersion %}
                     {% set uuid = formAggregate.uuid %}
                     {% set parent = null %}
-                    {% include '@forms/Admin/item-buttons.html.twig' %}
-                </div>
-            </div>
-            <div role="tabpanel" class="tab-pane box-body" id="settings">
-                {{ form_start(form) }}
-                {{ form_row(form.title) }}
-                {{ form_row(form.email) }}
-                {{ form_row(form.sender) }}
-                {{ form_row(form.emailTemplate) }}
-                {{ form_row(form.html) }}
-                {# Check if the form is displayed horizontally (EasyCMS) or vertically #}
-                <div class="row">
-                    <script type="text/javascript">
-                        // Script to select all text in clicked DOM element.
-                        function selectText(containerid) {
-                            if (document.selection) {
-                                var range = document.body.createTextRange();
-                                range.moveToElementText(document.getElementById(containerid));
-                                range.select();
-                            } else if (window.getSelection) {
-                                var range = document.createRange();
-                                range.selectNode(document.getElementById(containerid));
-                                window.getSelection().removeAllRanges();
-                                window.getSelection().addRange(range);
-                            }
-                        }
-                    </script>
-                    <div class="{{ symfony4 ? 'col-xs-12' : 'col-sm-10 col-sm-offset-2' }}">
-                        <p>
-                            {# TODO: Support child items #}
-                            {{ 'Available variables'|trans }}:<br/>
-                            {% for key, vars in itemVariables %}
-                                {% for var in vars %}
-                                    <code id="var-{{ key~loop.index }}" onclick="selectText('var-{{ key~loop.index }}')" class="text-nowrap">{% verbatim %}{{{% endverbatim %} {{ var }} {% verbatim %}}}{% endverbatim %}</code>
+                    {% if config.item_types is defined %}
+                        <div class="dropdown">
+                            <span class="dropdown-toggle btn btn-sm btn-primary" data-bs-toggle="dropdown">
+                                <span class="fas fa-plus"></span> {{ 'forms.label.addItem'|trans({}, 'cms') }}
+                            </span>
+                            <div class="dropdown-menu">
+                                {% for name, itemType in config.item_types %}
+                                    <a class="dropdown-item"
+                                       href="{{ path('forms_add_item', {formUuid: uuid, onVersion: version, itemName: name}) }}"
+                                    >
+                                        <span class="fa {{ itemType.icon }}"></span>
+                                        {{ name|trans({}, 'cms')|trans }}
+                                    </a>
                                 {% endfor %}
-                            {% endfor %}
-                        </p>
-                    </div>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
-                {{ form_row(form.successText) }}
-                <div class="bg-light row">
-                    <div class="{{ symfony4 ? 'col-xs-12' : 'col-sm-10 col-sm-offset-2' }}">
-                        <h4>{{ 'Advanced Options'|trans }}</h4>
-                    </div>
-                    <div class="col-xs-12">
-                        {{ form_row(form.template) }}
-                    </div>
-                </div>
-                {{ form_end(form) }}
             </div>
         </div>
+
+        <div class="">
+            {% set flashes = app.session.flashbag.all %}
+            {% if flashes is defined and flashes|length > 0 %}
+                <div class="container-fluid my-0">
+                    {% for label, messages in flashes %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ label }} rounded-0 border-0">
+                                {{ message|trans({}, 'cms')|raw }}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <table class="my-0 table table-hover small">
+                {% set cssClass = 'p-4 py-2' %}
+                <tr>
+                    <th class="{{ cssClass }}">
+                        {{ 'forms.label.required'|trans({}, 'cms') }}
+                    </th>
+                    <th class="{{ cssClass }}">
+                        {{ 'forms.label.label'|trans({}, 'cms') }}
+                    </th>
+                    <th class="{{ cssClass }}">
+                        {{ 'forms.label.name'|trans({}, 'cms') }}
+                    </th>
+                    <th class="{{ cssClass }}">
+                        {{ 'forms.label.type'|trans({}, 'cms') }}
+                    </th>
+                    <th class="{{ cssClass }}">
+                    </th>
+                </tr>
+                {% for item in formAggregate.items %}
+                    {% set level = 0 %}
+                    {% include '@forms/Admin/edit-item.html.twig' %}
+                {% endfor %}
+            </table>
+        </div>
     </div>
-{% endblock %}
+{% endblock content_wrapper %}

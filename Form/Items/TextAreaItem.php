@@ -10,9 +10,6 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class TextAreaItem extends TextItem
 {
-    /**
-     * {@inheritdoc}
-     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         parent::buildForm($builder, $options);
@@ -21,9 +18,6 @@ class TextAreaItem extends TextItem
         $builder->remove('isName');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildItem(FormBuilderInterface $builder, array $item)
     {
         $attributes = [

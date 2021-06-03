@@ -1,31 +1,51 @@
 <tr>
-    <td>
+    <td class="{{ cssClass }}">
         {% if item.data.required is defined and item.data.required %}<span class="fa fa-asterisk text-danger"></span>{% endif %}
     </td>
-    <td>
+    <td class="{{ cssClass }}">
         {% for i in 0 .. level %}{% if i > 0 %}&nbsp;&nbsp;&nbsp;{% endif %}{% endfor %}
-
         {% if item.data.label|length > 35 %}
             {{ item.data.label|slice(0, 35) }}...
         {% else %}
             {{ item.data.label }}
         {% endif %}
-
         {% if item.data.isSubject is defined and item.data.isSubject %}
-            &nbsp; <span style="font-size: 10px;padding: 4px 4px 1px 4px;" class="label label-primary">{{ 'Subject'|trans }}</span>
+            &nbsp; <span class="small text-muted">{{ 'forms.label.subject'|trans({}, 'cms') }}</span>
         {% endif %}
     </td>
-    <td>
+    <td class="{{ cssClass }}">
         {{ item.data.name }}
     </td>
-    <td>
-        {{ item.itemName|trans }}
-    </td>
-    <td class="text-bold">
-        <a href="{{ path('forms_shift_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid, direction: 'up'}) }}"><span class="fa fa-arrow-up"></span></a> &nbsp;
-        <a href="{{ path('forms_shift_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid, direction: 'down'}) }}"><span class="fa fa-arrow-down"></span></a> &nbsp;
-        <a href="{{ path('forms_edit_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid}) }}"><span class="fa fa-edit"></span> {{ 'Edit'|trans }}</a> &nbsp;
-        <a href="{{ path('forms_remove_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid}) }}" class="text-danger action-delete"><span class="fa fa-trash"></span> {{ 'Delete'|trans }}</a> &nbsp;
+    <td class="{{ cssClass }}">
+        {{ item.itemName|trans({}, 'cms')|trans }}
+    </td class="{{ cssClass }}">
+    <td class="{{ cssClass }} text-end">
+        {% set btnClass = 'text-decoration-none me-2' %}
+
+        <a href="{{ path('forms_shift_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid, direction: 'up'}) }}"
+           class="{{ btnClass }}"
+           aria-label="{{ 'admin.btn.shiftUp'|trans({}, 'cms') }}"
+        >
+            <span class="fa fa-arrow-up"></span>
+        </a>
+        <a href="{{ path('forms_shift_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid, direction: 'down'}) }}"
+           class="{{ btnClass }}"
+           aria-label="{{ 'admin.btn.shiftDown'|trans({}, 'cms') }}"
+        >
+            <span class="fa fa-arrow-down"></span>
+        </a>
+        <a href="{{ path('forms_edit_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid}) }}"
+           class="{{ btnClass }}"
+           aria-label="{{ 'admin.btn.edit'|trans({}, 'cms') }}"
+        >
+            <span class="fa fa-edit"></span>
+        </a>
+        <a href="{{ path('forms_remove_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid}) }}"
+           class="{{ btnClass }} text-danger"
+           aria-label="{{ 'admin.btn.delete'|trans({}, 'cms') }}"
+        >
+            <span class="fa fa-trash"></span>
+        </a>
     </td>
 </tr>
 
@@ -34,14 +54,4 @@
     {% for item in item.items %}
         {% include '@forms/Admin/edit-item.html.twig' %}
     {% endfor %}
-{% endif %}
-{% if item.itemName == 'Group' %}
-    <tr>
-        <td colspan="4" class="text-bold small">
-            {% set version = formAggregate.streamVersion %}
-            {% set uuid = formAggregate.uuid %}
-            {% set parent = item.uuid %}
-            {% include '@forms/Admin/item-buttons.html.twig' %}
-        </td>
-    </tr>
 {% endif %}
