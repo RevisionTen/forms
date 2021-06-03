@@ -21,8 +21,8 @@ use RevisionTen\Forms\Form\ItemType;
 use RevisionTen\Forms\Handler\FormBaseHandler;
 use RevisionTen\Forms\Interfaces\ItemInterface;
 use RevisionTen\Forms\Model\Form;
-use RevisionTen\Forms\Model\FormRead;
-use RevisionTen\Forms\Model\FormSubmission;
+use RevisionTen\Forms\Entity\FormRead;
+use RevisionTen\Forms\Entity\FormSubmission;
 use RevisionTen\Forms\Services\FormService;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
@@ -39,7 +39,7 @@ use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use function array_intersect_key;
 use function array_key_exists;
 use function array_map;
@@ -59,46 +59,18 @@ use function strcmp;
  */
 class FormController extends AbstractController
 {
-    /**
-     * @var MessageBus
-     */
-    private $messageBus;
+    private MessageBus $messageBus;
 
-    /**
-     * @var CommandBus
-     */
-    private $commandBus;
+    private CommandBus $commandBus;
 
-    /**
-     * @var AggregateFactory
-     */
-    private $aggregateFactory;
+    private AggregateFactory $aggregateFactory;
 
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
 
-    /**
-     * @var FormService
-     */
-    private $formService;
+    private FormService $formService;
 
-    /**
-     * @var TranslatorInterface
-     */
-    private $translator;
+    private TranslatorInterface $translator;
 
-    /**
-     * FormController constructor.
-     *
-     * @param MessageBus             $messageBus
-     * @param CommandBus             $commandBus
-     * @param AggregateFactory       $aggregateFactory
-     * @param EntityManagerInterface $entityManager
-     * @param FormService            $formService
-     * @param TranslatorInterface    $translator
-     */
     public function __construct(MessageBus $messageBus, CommandBus $commandBus, AggregateFactory $aggregateFactory, EntityManagerInterface $entityManager, FormService $formService, TranslatorInterface $translator)
     {
         $this->messageBus = $messageBus;
@@ -247,7 +219,7 @@ class FormController extends AbstractController
             return $this->errorResponse($aggregateUuid);
         }
 
-        return $this->render('@forms/Form/form.html.twig', [
+        return $this->render('@FORMS/Form/form.html.twig', [
             'title' => 'Add Form',
             'form' => $form->createView(),
         ]);
@@ -389,7 +361,7 @@ class FormController extends AbstractController
             $symfony4 = true;
         }
 
-        return $this->render('@forms/Admin/edit-aggregate.html.twig', [
+        return $this->render('@FORMS/Admin/edit-aggregate.html.twig', [
             'form' => $form->createView(),
             'formRead' => $formRead,
             'formAggregate' => $formAggregate,
@@ -476,7 +448,7 @@ class FormController extends AbstractController
         $itemNameTranslated = $this->translator->trans($itemName);
         $title = $this->translator->trans('Add %itemName% field', ['%itemName%' => $itemNameTranslated]);
 
-        return $this->render('@forms/Form/form.html.twig', [
+        return $this->render('@FORMS/Form/form.html.twig', [
             'title' => $title,
             'form' => $form->createView(),
         ]);
@@ -560,7 +532,7 @@ class FormController extends AbstractController
             return $this->errorResponse($formUuid);
         }
 
-        return $this->render('@forms/Form/form.html.twig', [
+        return $this->render('@FORMS/Form/form.html.twig', [
             'title' => $title,
             'form' => $form->createView(),
         ]);
@@ -661,11 +633,11 @@ class FormController extends AbstractController
      */
     public function renderFormAction(RequestStack $requestStack, string $formUuid, string $template = null, array $defaultData): Response
     {
-        $request = $requestStack->getMasterRequest();
+        $request = $requestStack->getMainRequest();
         $handledRequest = $this->formService->handleRequest($request, $formUuid, $defaultData);
 
         // Get the forms template.
-        $baseTemplate = $handledRequest['template'] ?? '@forms/Frontend/form.html.twig';
+        $baseTemplate = $handledRequest['template'] ?? '@FORMS/Frontend/form.html.twig';
         $template = $template ?: $baseTemplate;
 
         foreach ($handledRequest['messages'] as $message) {
@@ -820,7 +792,7 @@ class FormController extends AbstractController
         $tableHeaders['ip'] = $this->translator->trans('IP-Address');
         $tableHeaders['opened'] = $this->translator->trans('Opened');
 
-        return $this->render('@forms/Admin/submissions.html.twig', [
+        return $this->render('@FORMS/Admin/submissions.html.twig', [
             'submissions' => $submissions,
             'tableHeaders' => $tableHeaders,
         ]);

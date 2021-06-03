@@ -12,12 +12,10 @@ use ReflectionMethod;
 use RevisionTen\Forms\Form\Items\TextItem;
 use RevisionTen\Forms\Interfaces\ItemInterface;
 use RevisionTen\Forms\Model\Form;
-use RevisionTen\Forms\Model\FormRead;
 use RevisionTen\CQRS\Services\AggregateFactory;
 use Doctrine\ORM\EntityManagerInterface;
-use RevisionTen\Forms\Model\FormSubmission;
-use Swift_Mailer;
-use Swift_Message;
+use RevisionTen\Forms\Entity\FormRead;
+use RevisionTen\Forms\Entity\FormSubmission;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
@@ -25,14 +23,15 @@ use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
+use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
-use Twig_Environment;
 use function array_map;
 use function array_merge;
 use function array_values;
@@ -55,65 +54,25 @@ use function time;
  */
 class FormService
 {
-    /**
-     * @var ContainerInterface
-     */
-    private $container;
+    private ContainerInterface $container;
 
-    /**
-     * @var TranslatorInterface
-     */
-    private $translator;
+    private TranslatorInterface $translator;
 
-    /**
-     * @var Swift_Mailer
-     */
-    private $mailer;
+    private MailerInterface $mailer;
 
-    /**
-     * @var Twig_Environment
-     */
-    private $twig;
+    private Environment $twig;
 
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
 
-    /**
-     * @var AggregateFactory
-     */
-    private $aggregateFactory;
+    private AggregateFactory $aggregateFactory;
 
-    /**
-     * @var FormFactoryInterface
-     */
-    private $formFactory;
+    private FormFactoryInterface $formFactory;
 
-    /**
-     * @var UrlGeneratorInterface
-     */
-    private $urlGenerator;
+    private UrlGeneratorInterface $urlGenerator;
 
-    /**
-     * @var array
-     */
-    private $config;
+    private array $config;
 
-    /**
-     * PagePublishListener constructor.
-     *
-     * @param ContainerInterface     $container
-     * @param TranslatorInterface    $translator
-     * @param Swift_Mailer          $mailer
-     * @param Twig_Environment      $twig
-     * @param EntityManagerInterface $entityManager
-     * @param AggregateFactory       $aggregateFactory
-     * @param FormFactoryInterface   $formFactory
-     * @param UrlGeneratorInterface  $urlGenerator
-     * @param array                  $config
-     */
-    public function __construct(ContainerInterface $container, TranslatorInterface $translator, Swift_Mailer $mailer, Twig_Environment $twig, EntityManagerInterface $entityManager, AggregateFactory $aggregateFactory, FormFactoryInterface $formFactory, UrlGeneratorInterface $urlGenerator, array $config)
+    public function __construct(ContainerInterface $container, TranslatorInterface $translator, MailerInterface $mailer, Environment $twig, EntityManagerInterface $entityManager, AggregateFactory $aggregateFactory, FormFactoryInterface $formFactory, UrlGeneratorInterface $urlGenerator, array $config)
     {
         $this->container = $container;
         $this->translator = $translator;
@@ -293,7 +252,9 @@ class FormService
      * @param string $formUuid
      * @param array $defaultData
      * @param bool|null $submit
+     *
      * @return array
+     *
      * @throws Exception
      */
     public function handleRequest(Request $request, string $formUuid, array $defaultData, ?bool $submit = true): array

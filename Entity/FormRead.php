@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace RevisionTen\Forms\Model;
+namespace RevisionTen\Forms\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
@@ -21,24 +21,21 @@ use Doctrine\ORM\Mapping as ORM;
 class FormRead
 {
     /**
-     * @var int
      * @ORM\Column(type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue
      */
-    private $id;
+    private ?int $id =null;
 
     /**
-     * @var string
      * @ORM\Column(type="string")
      */
-    private $uuid;
+    private ?string $uuid = null;
 
     /**
-     * @var int
      * @ORM\Column(type="integer")
      */
-    private $version;
+    private ?int $version = null;
 
     /**
      * TODO: Switch to json once https://github.com/doctrine/doctrine2/pull/6988 is fixed.

@@ -1,24 +1,13 @@
 twig:
     paths:
-        '%kernel.project_dir%/vendor/revision-ten/forms/Templates': forms
+        '%kernel.project_dir%/vendor/revision-ten/forms/Resources/views': FORMS
     form_themes:
-          - '@forms/Frontend/form_theme.html.twig'
+          - '@FORMS/Frontend/form_theme.html.twig'
 
 framework:
     translator:
         paths:
             - '%kernel.project_dir%/vendor/revision-ten/forms/Resources/translations'
-
-doctrine:
-    orm:
-        mappings:
-            FormsBundle:
-                mapping: true
-                type: annotation
-                dir: 'Model'
-                alias: FormsBundle
-                prefix: 'RevisionTen\Forms\Model'
-                is_bundle: true
 
 services:
     RevisionTen\Forms\Controller\FormController:

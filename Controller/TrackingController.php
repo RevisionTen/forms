@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace RevisionTen\Forms\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
-use RevisionTen\Forms\Model\FormSubmission;
+use RevisionTen\Forms\Entity\FormSubmission;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
