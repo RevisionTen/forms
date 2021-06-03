@@ -627,7 +627,7 @@ class FormController extends AbstractController
      * @return Response
      * @throws Exception
      */
-    public function renderFormAction(RequestStack $requestStack, string $formUuid, string $template = null, array $defaultData): Response
+    public function renderCmsForm(RequestStack $requestStack, string $formUuid, string $template = null, array $defaultData): Response
     {
         $request = $requestStack->getMainRequest();
         $handledRequest = $this->formService->handleRequest($request, $formUuid, $defaultData);

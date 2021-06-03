@@ -43,6 +43,7 @@ forms:
         trackSubmissions: "Einsendungen tracken"
         twigVars: "Verfügbare Template Variablen"
         type: "Typ"
+        timeLimitError: "Sie haben dieses Formular bereits abgeschickt."
 
     placeholder:
         emails: "Eine kommagetrennte Liste von E-Mails"
