@@ -1,3 +1,0 @@
-revision_ten_forms_controllers:
-    resource: "@FormsBundle/Controller/"
-    type: annotation

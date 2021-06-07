@@ -15,24 +15,13 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class EntityItem extends Item
 {
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
 
-    /**
-     * EntityItem constructor.
-     *
-     * @param EntityManagerInterface $entityManager
-     */
     public function __construct(EntityManagerInterface $entityManager)
     {
         $this->entityManager = $entityManager;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         parent::buildForm($builder, $options);
@@ -40,7 +29,9 @@ class EntityItem extends Item
         $entityClasses = [];
         $metaData = $this->entityManager->getMetadataFactory()->getAllMetadata();
 
-        /** @var ClassMetadata $entityMetaData */
+        /**
+         * @var ClassMetadata $entityMetaData
+         */
         foreach ($metaData as $entityMetaData) {
             $namespace = $entityMetaData->namespace;
             $isAppNamespace = 'AppBundle\Entity' === $namespace || 'App\Entity' === $namespace;
@@ -52,35 +43,31 @@ class EntityItem extends Item
         }
 
         $builder->add('entity_class', ChoiceType::class, [
-            'label' => 'Entity Class',
+            'label' => 'forms.label.entity_class',
+            'translation_domain' => 'cms',
             'required' => true,
             'choices' => $entityClasses,
         ]);
 
-        /*$builder->add('choice_label', TextType::class, [
-            'label' => 'Choice Label Field',
-            'required' => false,
-        ]);*/
-
         $builder->add('placeholder', TextType::class, [
-            'label' => 'Placeholder',
+            'label' => 'forms.label.placeholder',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('expanded', CheckboxType::class, [
-            'label' => 'Expanded',
+            'label' => 'forms.label.expanded',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('multiple', CheckboxType::class, [
-            'label' => 'Multiple',
+            'label' => 'forms.label.multiple',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildItem(FormBuilderInterface $builder, array $item)
     {
         $attributes = [
@@ -123,9 +110,6 @@ class EntityItem extends Item
         $builder->add($item['name'], EntityType::class, $options);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getVariables(array $item): array
     {
         $var = $item['multiple'] ? $item['name']."|join(', ')" : $item['name'];

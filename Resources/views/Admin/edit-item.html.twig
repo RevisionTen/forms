@@ -1,0 +1,57 @@
+<tr>
+    <td class="{{ cssClass }}">
+        {% if item.data.required is defined and item.data.required %}<span class="fa fa-asterisk text-danger"></span>{% endif %}
+    </td>
+    <td class="{{ cssClass }}">
+        {% for i in 0 .. level %}{% if i > 0 %}&nbsp;&nbsp;&nbsp;{% endif %}{% endfor %}
+        {% if item.data.label|length > 35 %}
+            {{ item.data.label|slice(0, 35) }}...
+        {% else %}
+            {{ item.data.label }}
+        {% endif %}
+        {% if item.data.isSubject is defined and item.data.isSubject %}
+            &nbsp; <span class="small text-muted">{{ 'forms.label.subject'|trans({}, 'cms') }}</span>
+        {% endif %}
+    </td>
+    <td class="{{ cssClass }}">
+        {{ item.data.name }}
+    </td>
+    <td class="{{ cssClass }}">
+        {{ item.itemName|trans({}, 'cms')|trans }}
+    </td class="{{ cssClass }}">
+    <td class="{{ cssClass }} text-end">
+        {% set btnClass = 'text-decoration-none me-2' %}
+
+        <a href="{{ path('forms_shift_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid, direction: 'up'}) }}"
+           class="{{ btnClass }}"
+           aria-label="{{ 'admin.btn.shiftUp'|trans({}, 'cms') }}"
+        >
+            <span class="fa fa-arrow-up"></span>
+        </a>
+        <a href="{{ path('forms_shift_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid, direction: 'down'}) }}"
+           class="{{ btnClass }}"
+           aria-label="{{ 'admin.btn.shiftDown'|trans({}, 'cms') }}"
+        >
+            <span class="fa fa-arrow-down"></span>
+        </a>
+        <a href="{{ path('forms_edit_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid}) }}"
+           class="{{ btnClass }}"
+           aria-label="{{ 'admin.btn.edit'|trans({}, 'cms') }}"
+        >
+            <span class="fa fa-edit"></span>
+        </a>
+        <a href="{{ path('forms_remove_item', {formUuid: formAggregate.uuid, onVersion: formAggregate.streamVersion, itemUuid: item.uuid}) }}"
+           class="{{ btnClass }} text-danger"
+           aria-label="{{ 'admin.btn.delete'|trans({}, 'cms') }}"
+        >
+            <span class="fa fa-trash"></span>
+        </a>
+    </td>
+</tr>
+
+{% if item.items is defined and item.items|length > 0 %}
+    {% set level = level + 1 %}
+    {% for item in item.items %}
+        {% include '@forms/Admin/edit-item.html.twig' %}
+    {% endfor %}
+{% endif %}

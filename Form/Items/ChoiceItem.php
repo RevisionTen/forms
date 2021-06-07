@@ -21,31 +21,36 @@ class ChoiceItem extends Item
         parent::buildForm($builder, $options);
 
         $builder->add('choices', TextareaType::class, [
-            'label' => 'Choices',
+            'label' => 'forms.label.choices',
+            'translation_domain' => 'cms',
             'required' => true,
+            'help' => 'forms.help.choices',
             'attr' => [
                 'rows' => 10,
-                'placeholder' => 'A list of choices separated by line breaks. You can specify a key by separating it with a pipe char. key|label',
             ],
         ]);
 
         $builder->add('placeholder', TextType::class, [
-            'label' => 'Placeholder',
+            'label' => 'forms.label.placeholder',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('expanded', CheckboxType::class, [
-            'label' => 'Expanded',
+            'label' => 'forms.label.expanded',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('multiple', CheckboxType::class, [
-            'label' => 'Multiple',
+            'label' => 'forms.label.multiple',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('isReceiver', CheckboxType::class, [
-            'label' => 'Is Receiver',
+            'label' => 'forms.label.isReceiver',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
     }

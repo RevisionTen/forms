@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Form;
 
+use RevisionTen\CMS\Form\Types\CKEditorType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
@@ -20,127 +21,123 @@ class FormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder->add('title', TextType::class, [
-            'label' => 'Title',
-            'attr' => [
-                'placeholder' => 'Title',
-            ],
+            'label' => 'admin.label.title',
+            'translation_domain' => 'cms',
         ]);
 
         $builder->add('email', TextType::class, [
-            'label' => 'Receiver',
+            'label' => 'admin.label.toEmail',
+            'translation_domain' => 'cms',
             'attr' => [
-                'placeholder' => 'A comma separated list of emails',
+                'placeholder' => 'forms.placeholder.emails',
             ],
         ]);
 
         $builder->add('emailCC', TextType::class, [
-            'label' => 'CC',
+            'label' => 'admin.label.ccEmail',
+            'translation_domain' => 'cms',
             'required' => false,
             'attr' => [
-                'placeholder' => 'A comma separated list of emails',
+                'placeholder' => 'forms.placeholder.emails',
             ],
         ]);
 
         $builder->add('emailBCC', TextType::class, [
-            'label' => 'BCC',
+            'label' => 'admin.label.bccEmail',
+            'translation_domain' => 'cms',
             'required' => false,
             'attr' => [
-                'placeholder' => 'A comma separated list of emails',
+                'placeholder' => 'forms.placeholder.emails',
             ],
         ]);
 
         $builder->add('sender', TextType::class, [
-            'label' => 'Sender',
-            'attr' => [
-                'placeholder' => 'Sender',
-            ],
+            'label' => 'forms.label.sender',
+            'translation_domain' => 'cms',
         ]);
 
         $builder->add('timelimit', NumberType::class, [
-            'label' => 'Timelimit',
+            'label' => 'forms.label.timelimit',
+            'translation_domain' => 'cms',
             'required' => false,
             'attr' => [
-                'placeholder' => 'Timelimit (in seconds)',
+                'placeholder' => 'forms.placeholder.timelimit',
             ],
         ]);
 
         $builder->add('timeLimitMessage', TextareaType::class, [
-            'label' => 'Timelimit Message',
+            'label' => 'forms.label.timeLimitMessage',
+            'translation_domain' => 'cms',
             'required' => false,
             'attr' => [
                 'rows' => 3,
-                'placeholder' => 'Timelimit Message',
             ],
         ]);
 
         $builder->add('emailTemplate', TextareaType::class, [
-            'label' => 'Email Template',
+            'label' => 'forms.label.emailTemplate',
+            'translation_domain' => 'cms',
             'required' => true,
             'attr' => [
                 'rows' => 10,
-                'placeholder' => 'Email Template',
             ],
         ]);
 
         $builder->add('emailTemplateCopy', TextareaType::class, [
-            'label' => 'Email Template CC/BCC',
+            'label' => 'forms.label.emailTemplateCopy',
+            'translation_domain' => 'cms',
             'required' => false,
             'attr' => [
                 'rows' => 10,
-                'placeholder' => 'Email Template CC/BCC',
             ],
         ]);
 
         $builder->add('html', CheckboxType::class, [
-            'label' => 'Send as HTML',
+            'label' => 'forms.label.html',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
-        if (class_exists('\Ivory\CKEditorBundle\Form\Type\CKEditorType')) {
-            $textAreaType = \Ivory\CKEditorBundle\Form\Type\CKEditorType::class;
-        } else {
-            $textAreaType = TextareaType::class;
-        }
 
-        $builder->add('successText', $textAreaType, [
-            'label' => 'Success Text',
+        $builder->add('successText', CKEditorType::class, [
+            'label' => 'forms.label.successText',
+            'translation_domain' => 'cms',
             'required' => true,
-            'attr' => [
-                'rows' => 10,
-                'placeholder' => 'Success Text',
-            ],
         ]);
 
         $builder->add('template', TextType::class, [
-            'label' => 'Template',
+            'label' => 'forms.label.template',
+            'translation_domain' => 'cms',
             'required' => false,
-            'attr' => [
-                'placeholder' => 'Twig Template Path',
-            ],
         ]);
 
         $builder->add('saveSubmissions', CheckboxType::class, [
-            'label' => 'Save submissions',
+            'label' => 'forms.label.saveSubmissions',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('trackSubmissions', CheckboxType::class, [
-            'label' => 'Track submissions',
+            'label' => 'forms.label.trackSubmissions',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('disableCsrfProtection', CheckboxType::class, [
-            'label' => 'Disable CSRF protection',
+            'label' => 'forms.label.disableCsrfProtection',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('scrollToSuccessText', CheckboxType::class, [
-            'label' => 'Scroll to success text',
+            'label' => 'forms.label.scrollToSuccessText',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('save', SubmitType::class, [
-            'label' => 'Save',
+            'label' => 'admin.btn.save',
+            'translation_domain' => 'cms',
         ]);
     }
 }
