@@ -1,0 +1,7 @@
+{% if value is null %}
+    <span class="badge bg-info">{{ 'forms.label.notTracked'|trans({}, 'cms') }}<span>
+{% elseif value %}
+    <span class="badge bg-success">{{ 'admin.value.typeTrue'|trans({}, 'cms') }}<span>
+{% else %}
+    <span class="badge bg-danger">{{ 'admin.value.typeFalse'|trans({}, 'cms') }}</span>
+{% endif %}

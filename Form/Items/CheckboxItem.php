@@ -10,10 +10,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class CheckboxItem extends Item
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         parent::buildForm($builder, $options);
 
@@ -21,10 +18,7 @@ class CheckboxItem extends Item
         $builder->remove('popover');
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function buildItem(FormBuilderInterface $builder, array $item)
+    public function buildItem(FormBuilderInterface $builder, array $item): void
     {
         $attributes = [
             'aria-label' => $item['label'],

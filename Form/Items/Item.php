@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Form\Items;
 
+use RevisionTen\CMS\Form\Types\CKEditorType;
 use RevisionTen\Forms\Interfaces\ItemInterface;
 use RevisionTen\Forms\Model\FormRead;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
@@ -17,72 +17,60 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class Item extends AbstractType implements ItemInterface
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'items' => false,
         ]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder->add('label', TextType::class, [
-            'label' => 'Label',
+            'label' => 'forms.label.label',
+            'translation_domain' => 'cms',
             'required' => true,
         ]);
 
         $builder->add('name', TextType::class, [
-            'label' => 'Name',
+            'label' => 'forms.label.name',
+            'translation_domain' => 'cms',
             'required' => true,
             'attr' => [
-                'placeholder' => 'only use lowercase letters',
+                'placeholder' => 'forms.placeholder.name',
             ],
         ]);
 
         $builder->add('required', CheckboxType::class, [
-            'label' => 'Required',
+            'label' => 'forms.label.required',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('read_only', CheckboxType::class, [
-            'label' => 'Read Only',
+            'label' => 'forms.label.read_only',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('hideLabel', CheckboxType::class, [
-            'label' => 'Hide Label',
+            'label' => 'forms.label.hideLabel',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
-        if (class_exists('\Ivory\CKEditorBundle\Form\Type\CKEditorType')) {
-            $textAreaType = \Ivory\CKEditorBundle\Form\Type\CKEditorType::class;
-        } else {
-            $textAreaType = TextareaType::class;
-        }
-
-        $builder->add('popover', $textAreaType, [
-            'label' => 'Popover',
+        $builder->add('popover', CKEditorType::class, [
+            'label' => 'forms.label.popover',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildItem(FormBuilderInterface $builder, array $itemOptions)
     {
         self::getItem($builder, $itemOptions);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getItem(FormBuilderInterface $builder, array $item)
     {
         $attributes = [
@@ -122,33 +110,21 @@ class Item extends AbstractType implements ItemInterface
         $builder->add($item['name'], TextType::class, $options);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getVariables(array $item): array
     {
         return [$item['name']];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getEmail($itemData): ?string
     {
         return $itemData;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function onSubmit(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool
     {
         return true;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function onValidate(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool
     {
         return true;

@@ -1,10 +1,6 @@
 # Default forms bundle config.
 forms:
-    load_easyadmin_config: true
     item_types:
-        #GroupItem:
-        #    class: RevisionTen\Forms\Form\Items\GroupItem
-        #    icon: 'fa-object-group'
         TextItem:
             class: RevisionTen\Forms\Form\Items\TextItem
             icon: 'fa-comment'

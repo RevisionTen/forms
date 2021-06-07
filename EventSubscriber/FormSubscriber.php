@@ -11,31 +11,25 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class FormSubscriber implements EventSubscriberInterface
 {
-    /**
-     * @var FormService
-     */
-    protected $formService;
+    protected FormService $formService;
 
-    /**
-     * FormBaseListener constructor.
-     *
-     * @param FormService $formService
-     */
     public function __construct(FormService $formService)
     {
         $this->formService = $formService;
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
-            AggregateUpdatedEvent::NAME => 'updateReadModel',
+            AggregateUpdatedEvent::class => 'updateReadModel',
         ];
     }
 
+    /**
+     * @throws \Exception
+     */
     public function updateReadModel(AggregateUpdatedEvent $aggregateUpdatedEvent): void
     {
-        /** @var \RevisionTen\CQRS\Interfaces\EventInterface $event */
         $event = $aggregateUpdatedEvent->getEvent();
 
         $aggregateClass = $event::getAggregateClass();

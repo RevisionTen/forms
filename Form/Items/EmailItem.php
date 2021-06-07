@@ -22,12 +22,14 @@ class EmailItem extends TextItem
         $builder->remove('isName');
 
         $builder->add('replyTo', CheckboxType::class, [
-            'label' => 'Reply to this Email',
+            'label' => 'forms.label.replyTo',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('isReceiver', CheckboxType::class, [
-            'label' => 'Is Receiver',
+            'label' => 'forms.label.isReceiver',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
     }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace RevisionTen\Forms\Model;
+namespace RevisionTen\Forms\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 

@@ -12,12 +12,10 @@ use ReflectionMethod;
 use RevisionTen\Forms\Form\Items\TextItem;
 use RevisionTen\Forms\Interfaces\ItemInterface;
 use RevisionTen\Forms\Model\Form;
-use RevisionTen\Forms\Model\FormRead;
 use RevisionTen\CQRS\Services\AggregateFactory;
 use Doctrine\ORM\EntityManagerInterface;
-use RevisionTen\Forms\Model\FormSubmission;
-use Swift_Mailer;
-use Swift_Message;
+use RevisionTen\Forms\Entity\FormRead;
+use RevisionTen\Forms\Entity\FormSubmission;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
@@ -25,14 +23,17 @@ use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
+use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
-use Twig_Environment;
 use function array_map;
 use function array_merge;
 use function array_values;
@@ -55,65 +56,25 @@ use function time;
  */
 class FormService
 {
-    /**
-     * @var ContainerInterface
-     */
-    private $container;
+    private ContainerInterface $container;
 
-    /**
-     * @var TranslatorInterface
-     */
-    private $translator;
+    private TranslatorInterface $translator;
 
-    /**
-     * @var Swift_Mailer
-     */
-    private $mailer;
+    private MailerInterface $mailer;
 
-    /**
-     * @var Twig_Environment
-     */
-    private $twig;
+    private Environment $twig;
 
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
 
-    /**
-     * @var AggregateFactory
-     */
-    private $aggregateFactory;
+    private AggregateFactory $aggregateFactory;
 
-    /**
-     * @var FormFactoryInterface
-     */
-    private $formFactory;
+    private FormFactoryInterface $formFactory;
 
-    /**
-     * @var UrlGeneratorInterface
-     */
-    private $urlGenerator;
+    private UrlGeneratorInterface $urlGenerator;
 
-    /**
-     * @var array
-     */
-    private $config;
+    private array $config;
 
-    /**
-     * PagePublishListener constructor.
-     *
-     * @param ContainerInterface     $container
-     * @param TranslatorInterface    $translator
-     * @param Swift_Mailer          $mailer
-     * @param Twig_Environment      $twig
-     * @param EntityManagerInterface $entityManager
-     * @param AggregateFactory       $aggregateFactory
-     * @param FormFactoryInterface   $formFactory
-     * @param UrlGeneratorInterface  $urlGenerator
-     * @param array                  $config
-     */
-    public function __construct(ContainerInterface $container, TranslatorInterface $translator, Swift_Mailer $mailer, Twig_Environment $twig, EntityManagerInterface $entityManager, AggregateFactory $aggregateFactory, FormFactoryInterface $formFactory, UrlGeneratorInterface $urlGenerator, array $config)
+    public function __construct(ContainerInterface $container, TranslatorInterface $translator, MailerInterface $mailer, Environment $twig, EntityManagerInterface $entityManager, AggregateFactory $aggregateFactory, FormFactoryInterface $formFactory, UrlGeneratorInterface $urlGenerator, array $config)
     {
         $this->container = $container;
         $this->translator = $translator;
@@ -265,7 +226,7 @@ class FormService
         return null !== $formSubmission && time() < $formSubmission->getExpires()->getTimestamp();
     }
 
-    private function addTrackingPixel(Request $request, Swift_Message $message, string $trackingToken): Swift_Message
+    private function addTrackingPixel(Request $request, Email $message, string $trackingToken): Email
     {
         // Get context.
         $context = new RequestContext();
@@ -278,12 +239,12 @@ class FormService
         ], UrlGeneratorInterface::ABSOLUTE_URL);
 
         // Append tracking pixel and always send mail as html.
-        $body = $message->getBody();
-        if ($message->getBodyContentType() === 'text/plain') {
-            $body = '<pre>'.$body.'</pre>';
+        $body = $message->getHtmlBody();
+        if (empty($body)) {
+            $body = '<pre>'.$message->getTextBody().'</pre>';
         }
         $body .= '<br/><img alt="" src="'.$trackingUrl.'">';
-        $message->setBody($body, 'text/html');
+        $message->html($body, 'text/html');
 
         return $message;
     }
@@ -293,7 +254,9 @@ class FormService
      * @param string $formUuid
      * @param array $defaultData
      * @param bool|null $submit
+     *
      * @return array
+     *
      * @throws Exception
      */
     public function handleRequest(Request $request, string $formUuid, array $defaultData, ?bool $submit = true): array
@@ -321,7 +284,7 @@ class FormService
             // Display error If user is blocked.
             if ($isBlocked) {
                 $aggregateData = json_decode(json_encode($formRead->getPayload()), true, 512);
-                $timeLimitMessage = $aggregateData['timeLimitMessage'] ?? $this->translator->trans('You have already submitted the form, please try again later');
+                $timeLimitMessage = $aggregateData['timeLimitMessage'] ?? $this->translator->trans('forms.label.timeLimitError', [], 'cms');
                 if ($form->isSubmitted()) {
                     $form->addError(new FormError($timeLimitMessage));
                 } else {
@@ -349,23 +312,17 @@ class FormService
                 if ($submit && $isValid && $this->onSubmit($form,$formRead, $data)) {
 
                     // Build and send the email.
-                    $message = new Swift_Message();
+                    $message = new Email();
 
                     // Get To Email.
                     $to = $this->getField($aggregateData, $data, 'isReceiver') ?? $formRead->getEmail();
-                    $message->setTo(self::getMailsFromString($to));
+                    $message->to(...self::getMailsFromString($to));
 
                     // Get CC Email.
                     $cc = $formRead->getEmailCC();
-                    if ($cc) {
-                        $message->setCc(self::getMailsFromString($cc));
-                    }
 
                     // Get BCC Email.
                     $bcc = $formRead->getEmailBCC();
-                    if ($bcc) {
-                        $message->setBcc(self::getMailsFromString($bcc));
-                    }
 
                     // Get ReplyTo Email.
                     $replyTo = $this->getField($aggregateData, $data, 'replyTo');
@@ -382,37 +339,56 @@ class FormService
                     }
 
                     // Set Reply To.
-                    $message->setReplyTo($replyTo, $replyToName);
+                    if ($replyTo) {
+                        $replyToAddress = new Address($replyTo, $replyToName);
+                        $message->replyTo($replyToAddress);
+                    }
 
                     // Set Sender and From.
-                    $message->setSender($formRead->getSender(), $replyToName ?? 'Website');
-                    $message->setFrom($formRead->getSender(), $replyToName ?? 'Website');
+                    $sender = new Address($formRead->getSender(), $replyToName ?? 'Website');
+                    $message->sender($sender);
+                    $message->from($sender);
 
                     // Get Subject.
-                    $message->setSubject($this->getField($aggregateData, $data, 'isSubject') ?? $formRead->getTitle());
+                    $message->subject($this->getField($aggregateData, $data, 'isSubject') ?? $formRead->getTitle());
 
                     // Generate tracking token.
                     $trackingToken = md5(random_bytes(10));
 
                     // Get the message body.
-                    [$body, $contentType] = $this->renderEmailTemplate($formRead->getEmailTemplate(), $formRead->getHtml(), $data);
-                    $message->setBody($body, $contentType);
+                    $isHtml = $formRead->getHtml();
+                    $body= $this->renderEmailTemplate($formRead->getEmailTemplate(),$data);
+                    if ($isHtml) {
+                        $message->html($body);
+                    } else {
+                        $message->text($body);
+                    }
+
 
                     // Send different emails to main recipient and copy recipients.
-                    if (!empty($formRead->getEmailTemplateCopy())) {
+                    if (!empty($formRead->getEmailTemplateCopy()) && ($cc || $bcc)) {
                         $messageCc = clone $message;
 
                         // Use cc email template.
-                        [$body, $contentType] = $this->renderEmailTemplate($formRead->getEmailTemplateCopy(), $formRead->getHtml(), $data);
-                        $messageCc->setBody($body, $contentType);
+                        $body= $this->renderEmailTemplate($formRead->getEmailTemplateCopy(),$data);
+                        if ($isHtml) {
+                            $messageCc->html($body);
+                        } else {
+                            $messageCc->text($body);
+                        }
 
                         // Send the CC message with different template only to (b)cc recipients.
-                        $messageCc->setTo(null);
+                        $messageCc->to($sender);
+                        $messageCc->cc(...$messageCc->getCc());
+                        $messageCc->bcc(...$messageCc->getCc());
                         $this->mailer->send($messageCc);
-
-                        // Send to default message only to main recipient.
-                        $message->setCc(null);
-                        $message->setBcc(null);
+                    } else {
+                        if ($cc) {
+                            $message->cc(...self::getMailsFromString($cc));
+                        }
+                        if ($bcc) {
+                            $message->bcc(...self::getMailsFromString($bcc));
+                        }
                     }
 
                     // Send the email with default template.
@@ -554,45 +530,22 @@ class FormService
         $this->entityManager->flush();
     }
 
-    /**
-     * @param string $emailTemplate
-     * @param bool   $isHtml
-     * @param        $data
-     *
-     * @return array|null
-     * @throws Exception
-     */
-    private function renderEmailTemplate(string $emailTemplate, bool $isHtml, $data): ?array
+    private function renderEmailTemplate(string $emailTemplate, $data): string
     {
         // Try to render the twig template.
-        $body = null;
-        $error = null;
         try {
             $view = $this->twig->createTemplate($emailTemplate);
             $body = $view->render($data);
-        } catch (SyntaxError $error) {
-            $body = null;
-        } catch (LoaderError $error) {
-            $body = null;
-        } catch (RuntimeError $error) {
-            $body = null;
-        } catch (Throwable $error) {
-            $body = null;
+        } catch (SyntaxError | Throwable $error) {
+            $body = '';
+            // If rendering the twig template fails json_encode the raw form data and send as plain text with error attached.
+            if (method_exists($error, 'getRawMessage')) {
+                $body = 'An Error occurred: '.$error->getRawMessage()."\nPlease check your Email-Template at line ".$error->getTemplateLine().". \nHere is the raw form submission:";
+                $body .= "\n\n". json_encode($data, JSON_THROW_ON_ERROR);
+            }
         }
 
-        // If rendering the twig template fails json_encode the raw form data and send as plain text with error attached.
-        if (null === $body && is_object($error) && method_exists($error, 'getRawMessage')) {
-            $body = 'An Error occurred: '.$error->getRawMessage()."\nPlease check your Email-Template at line ".$error->getTemplateLine().". \nHere is the raw form submission:";
-            $body .= "\n\n". json_encode($data);
-            $isHtml = false;
-        }
-
-        $contentType = $isHtml ? 'text/html' : 'text/plain';
-
-        return [
-            $body,
-            $contentType,
-        ];
+        return $body;
     }
 
     /**

@@ -21,8 +21,8 @@ use RevisionTen\Forms\Form\ItemType;
 use RevisionTen\Forms\Handler\FormBaseHandler;
 use RevisionTen\Forms\Interfaces\ItemInterface;
 use RevisionTen\Forms\Model\Form;
-use RevisionTen\Forms\Model\FormRead;
-use RevisionTen\Forms\Model\FormSubmission;
+use RevisionTen\Forms\Entity\FormRead;
+use RevisionTen\Forms\Entity\FormSubmission;
 use RevisionTen\Forms\Services\FormService;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
@@ -39,7 +39,7 @@ use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use function array_intersect_key;
 use function array_key_exists;
 use function array_map;
@@ -59,47 +59,21 @@ use function strcmp;
  */
 class FormController extends AbstractController
 {
-    /**
-     * @var MessageBus
-     */
-    private $messageBus;
+    private MessageBus $messageBus;
 
-    /**
-     * @var CommandBus
-     */
-    private $commandBus;
+    private CommandBus $commandBus;
 
-    /**
-     * @var AggregateFactory
-     */
-    private $aggregateFactory;
+    private AggregateFactory $aggregateFactory;
 
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
 
-    /**
-     * @var FormService
-     */
-    private $formService;
+    private FormService $formService;
 
-    /**
-     * @var TranslatorInterface
-     */
-    private $translator;
+    private TranslatorInterface $translator;
 
-    /**
-     * FormController constructor.
-     *
-     * @param MessageBus             $messageBus
-     * @param CommandBus             $commandBus
-     * @param AggregateFactory       $aggregateFactory
-     * @param EntityManagerInterface $entityManager
-     * @param FormService            $formService
-     * @param TranslatorInterface    $translator
-     */
-    public function __construct(MessageBus $messageBus, CommandBus $commandBus, AggregateFactory $aggregateFactory, EntityManagerInterface $entityManager, FormService $formService, TranslatorInterface $translator)
+    private RequestStack $requestStack;
+
+    public function __construct(MessageBus $messageBus, CommandBus $commandBus, AggregateFactory $aggregateFactory, EntityManagerInterface $entityManager, FormService $formService, TranslatorInterface $translator, RequestStack $requestStack)
     {
         $this->messageBus = $messageBus;
         $this->commandBus = $commandBus;
@@ -107,6 +81,7 @@ class FormController extends AbstractController
         $this->entityManager = $entityManager;
         $this->formService = $formService;
         $this->translator = $translator;
+        $this->requestStack = $requestStack;
     }
 
     /**
@@ -238,7 +213,7 @@ class FormController extends AbstractController
             if ($success) {
                 $this->addFlash(
                     'success',
-                    'Form created'
+                    $this->translator->trans('Form created', [], 'cms')
                 );
 
                 return $this->redirectToForm($aggregateUuid);
@@ -247,8 +222,8 @@ class FormController extends AbstractController
             return $this->errorResponse($aggregateUuid);
         }
 
-        return $this->render('@forms/Form/form.html.twig', [
-            'title' => 'Add Form',
+        return $this->render('@CMS/Backend/Form/form.html.twig', [
+            'title' => $this->translator->trans('forms.label.addForm', [], 'cms'),
             'form' => $form->createView(),
         ]);
     }
@@ -383,20 +358,16 @@ class FormController extends AbstractController
             return $this->errorResponse($formAggregate->getUuid());
         }
 
-        if (class_exists('\Symfony\Component\HttpKernel\Kernel') && defined('\Symfony\Component\HttpKernel\Kernel::MAJOR_VERSION')) {
-            $symfony4 = 4 === Kernel::MAJOR_VERSION;
-        } else {
-            $symfony4 = true;
-        }
-
         return $this->render('@forms/Admin/edit-aggregate.html.twig', [
             'form' => $form->createView(),
+            'title' => $this->translator->trans('forms.label.editForm', [
+                '%title%' => $formAggregate->title,
+            ], 'cms'),
             'formRead' => $formRead,
             'formAggregate' => $formAggregate,
             'user' => $user,
             'config' => $config,
             'itemVariables' => $itemVariables,
-            'symfony4' => $symfony4,
         ]);
     }
 
@@ -473,10 +444,10 @@ class FormController extends AbstractController
             return $this->errorResponse($formUuid);
         }
 
-        $itemNameTranslated = $this->translator->trans($itemName);
-        $title = $this->translator->trans('Add %itemName% field', ['%itemName%' => $itemNameTranslated]);
+        $itemNameTranslated = $this->translator->trans($itemName, [], 'cms');
+        $title = $this->translator->trans('forms.label.addField', ['%itemName%' => $itemNameTranslated], 'cms');
 
-        return $this->render('@forms/Form/form.html.twig', [
+        return $this->render('@CMS/Backend/Form/form.html.twig', [
             'title' => $title,
             'form' => $form->createView(),
         ]);
@@ -514,9 +485,9 @@ class FormController extends AbstractController
         $item = FormBaseHandler::getItem($aggregate, $itemUuid);
 
         // Get the form title.
-        $title = $this->translator->trans('Edit %itemName% field', [
-            '%itemName%' => $this->translator->trans($item['itemName'] ?? 'Form'),
-        ]);
+        $title = $this->translator->trans('forms.label.editField', [
+            '%itemName%' => $this->translator->trans($item['itemName'] ?? 'Form', [], 'cms'),
+        ], 'cms');
 
         if ($item && isset($item['data'], $item['itemName'])) {
             $form = $this->getItemForm($item['itemName'], $item, $aggregate->items);
@@ -528,7 +499,7 @@ class FormController extends AbstractController
                 // Remove data that hasn't changed.
                 $data = $this->diff($item['data'], $data);
                 if (empty($data)) {
-                    $form->addError(new FormError($this->translator->trans('Data has not changed.')));
+                    $form->addError(new FormError($this->translator->trans('admin.validation.dataUnchanged', [], 'cms')));
                 }
 
                 if ($form->isValid()) {
@@ -547,7 +518,7 @@ class FormController extends AbstractController
                     if ($success) {
                         $this->addFlash(
                             'success',
-                            $this->translator->trans('Field edited')
+                            $this->translator->trans('Field edited', [], 'cms')
                         );
 
                         return $this->redirectToForm($formUuid);
@@ -560,7 +531,7 @@ class FormController extends AbstractController
             return $this->errorResponse($formUuid);
         }
 
-        return $this->render('@forms/Form/form.html.twig', [
+        return $this->render('@CMS/Backend/Form/form.html.twig', [
             'title' => $title,
             'form' => $form->createView(),
         ]);
@@ -598,7 +569,7 @@ class FormController extends AbstractController
         if ($success) {
             $this->addFlash(
                 'success',
-                $this->translator->trans('Field deleted')
+                $this->translator->trans('Field deleted', [], 'cms')
             );
 
             return $this->redirectToForm($formUuid);
@@ -641,7 +612,7 @@ class FormController extends AbstractController
         if ($success) {
             $this->addFlash(
                 'success',
-                $this->translator->trans('Field shifted')
+                $this->translator->trans('Field shifted', [], 'cms')
             );
 
             return $this->redirectToForm($formUuid);
@@ -659,9 +630,9 @@ class FormController extends AbstractController
      * @return Response
      * @throws Exception
      */
-    public function renderFormAction(RequestStack $requestStack, string $formUuid, string $template = null, array $defaultData): Response
+    public function renderCmsForm(string $formUuid, string $template = null, array $defaultData): Response
     {
-        $request = $requestStack->getMasterRequest();
+        $request = $this->requestStack->getMainRequest();
         $handledRequest = $this->formService->handleRequest($request, $formUuid, $defaultData);
 
         // Get the forms template.
@@ -733,7 +704,7 @@ class FormController extends AbstractController
         if ($success) {
             $this->addFlash(
                 'success',
-                $this->translator->trans('Form duplicated')
+                $this->translator->trans('Form duplicated', [], 'cms')
             );
 
             return $this->redirectToForm($aggregateUuid);
@@ -764,65 +735,5 @@ class FormController extends AbstractController
         $response->headers->set('Content-Disposition', 'attachment; filename="submissions.csv"');
 
         return $response;
-    }
-
-    /**
-     * TODO: Unused.
-     *
-     * @Route("/submissions", name="forms_submissions")
-     *
-     * @param Request $request
-     *
-     * @return Response
-     */
-    public function submissions(Request $request): Response
-    {
-        $id = (int) $request->get('id');
-
-        /**
-         * @var FormSubmission[] $formSubmissions
-         */
-        $formSubmissions = $this->entityManager->getRepository(FormSubmission::class)->findBy([
-            'form' => $id,
-        ]);
-
-        $submissions = array_map(static function ($formSubmission) {
-            $payload = $formSubmission->getPayload();
-            $payload['created'] = $formSubmission->getCreated()->format('Y-m-d H:i:s');
-            $payload['ip'] = $formSubmission->getIp();
-            $payload['opened'] = $formSubmission->getOpened();
-
-            return $payload;
-        }, $formSubmissions);
-        rsort($submissions);
-
-        /**
-         * @var FormRead $formRead
-         */
-        $formRead = $this->entityManager->getRepository(FormRead::class)->findOneBy(['id' => $id]);
-        $payload = $formRead->getPayload();
-
-        $tableHeaders = [];
-        foreach ($payload['items'] as $item) {
-            $tableHeaders[$item['data']['name']] = $item['data']['label'];
-        }
-        // Get empty fields.
-        $usedHeaders = [];
-        foreach ($submissions as $submission) {
-            foreach ($submission as $field => $value) {
-                if (null !== $value) {
-                    $usedHeaders[$field] = $field;
-                }
-            }
-        }
-        $tableHeaders = array_intersect_key($tableHeaders, $usedHeaders);
-        $tableHeaders['created'] = $this->translator->trans('Created');
-        $tableHeaders['ip'] = $this->translator->trans('IP-Address');
-        $tableHeaders['opened'] = $this->translator->trans('Opened');
-
-        return $this->render('@forms/Admin/submissions.html.twig', [
-            'submissions' => $submissions,
-            'tableHeaders' => $tableHeaders,
-        ]);
     }
 }

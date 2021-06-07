@@ -8,57 +8,39 @@ use RevisionTen\CQRS\Model\Aggregate;
 
 final class Form extends Aggregate
 {
-    /** @var string */
-    public $title;
+    public ?string $title = null;
 
-    /** @var string */
-    public $email;
+    public ?string $email = null;
 
-    /** @var string */
-    public $emailCC;
+    public ?string $emailCC = null;
 
-    /** @var string */
-    public $emailBCC;
+    public ?string $emailBCC = null;
 
-    /** @var string */
-    public $sender;
+    public ?string $sender = null;
 
-    /** @var integer */
-    public $timelimit;
+    public ?int $timelimit = null;
 
-    /** @var string */
-    public $timeLimitMessage;
+    public ?string $timeLimitMessage = null;
 
-    /** @var string */
-    public $template;
+    public ?string $template = null;
 
-    /** @var string */
-    public $emailTemplate;
+    public ?string $emailTemplate = null;
 
-    /** @var string */
-    public $emailTemplateCopy;
+    public ?string $emailTemplateCopy = null;
 
-    /** @var bool */
-    public $html;
+    public bool $html = false;
 
-    /** @var bool */
-    public $deleted = false;
+    public bool $deleted = false;
 
-    /** @var string */
-    public $successText;
+    public ?string $successText = null;
 
-    /** @var bool */
-    public $saveSubmissions;
+    public bool $saveSubmissions = false;
 
-    /** @var bool */
-    public $trackSubmissions = false;
+    public bool $trackSubmissions = false;
 
-    /** @var bool */
-    public $disableCsrfProtection = false;
+    public bool $disableCsrfProtection = false;
 
-    /** @var bool */
-    public $scrollToSuccessText = false;
+    public bool $scrollToSuccessText = false;
 
-    /** @var array */
-    public $items;
+    public array $items = [];
 }

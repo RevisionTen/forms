@@ -43,19 +43,6 @@ class FormsExtension extends Extension implements PrependExtensionInterface
 
         $configs = $container->getExtensionConfig('forms');
 
-        $loadEasyAdminConfig = true;
-        foreach ($configs as $config) {
-            if (isset($config['load_easyadmin_config'])) {
-                $loadEasyAdminConfig = $config['load_easyadmin_config'];
-                break;
-            }
-        }
-
-        if ($loadEasyAdminConfig) {
-            // Load EasyAdmin configuration.
-            $loader->load('easyadmin.yml');
-        }
-
         if (empty($configs) || (count($configs) === 1 && empty($configs[0]))) {
             // Load default forms bundle config.
             $loader->load('forms.yaml');

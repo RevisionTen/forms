@@ -9,12 +9,10 @@ class Configuration implements ConfigurationInterface
 {
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-
-        $rootNode = $treeBuilder->root('forms');
+        $treeBuilder = new TreeBuilder('cms');
+        $rootNode = $treeBuilder->getRootNode();
         $rootNode
             ->children()
-                ->booleanNode('load_easyadmin_config')->end()
                 ->arrayNode('item_types')
                     ->arrayPrototype()
                         ->children()

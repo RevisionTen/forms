@@ -11,9 +11,12 @@
         }
     ],
     "require": {
-        "php": "^7.1",
+        "php": "^7.4.0",
         "ext-json": "*",
-        "revision-ten/cqrs": "^2.0.0"
+        "revision-ten/cqrs": "^3.0"
+    },
+    "conflict": {
+        "revision-ten/cms": "<3.0"
     },
     "autoload": {
         "psr-4": { "RevisionTen\\Forms\\": "" }

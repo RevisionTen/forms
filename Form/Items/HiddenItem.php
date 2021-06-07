@@ -11,20 +11,19 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class HiddenItem extends Item
 {
-    /**
-     * {@inheritdoc}
-     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         parent::buildForm($builder, $options);
 
         $builder->add('isSubject', CheckboxType::class, [
-            'label' => 'Is Subject',
+            'label' => 'forms.label.isSubject',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
         $builder->add('isReceiver', CheckboxType::class, [
-            'label' => 'Is Receiver',
+            'label' => 'forms.label.isReceiver',
+            'translation_domain' => 'cms',
             'required' => false,
         ]);
 
@@ -32,9 +31,6 @@ class HiddenItem extends Item
         $builder->remove('popover');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildItem(FormBuilderInterface $builder, array $item)
     {
         $attributes = [];

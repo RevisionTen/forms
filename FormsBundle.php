@@ -2,24 +2,14 @@
 
 namespace RevisionTen\Forms;
 
+use RevisionTen\Forms\Entity\FormRead;
+use RevisionTen\Forms\Entity\FormSubmission;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class FormsBundle extends Bundle
 {
-    public const VERSION = '2.0.9';
-
-    /**
-     * {@inheritdoc}
-     */
-    public function boot(): void
-    {
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function build(ContainerBuilder $container): void
-    {
-    }
+    public const VERSION = '3.0.0';
 }
+
+class_alias(FormRead::class, '\\RevisionTen\\Forms\\Model\\FormRead');
+class_alias(FormSubmission::class, '\\RevisionTen\\Forms\\Model\\FormSubmission');
