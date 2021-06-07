@@ -13,7 +13,7 @@
     "require": {
         "php": "^7.4.0",
         "ext-json": "*",
-        "revision-ten/cqrs": "dev-feature/version3"
+        "revision-ten/cqrs": "^3.0"
     },
     "conflict": {
         "revision-ten/cms": "<3.0"
