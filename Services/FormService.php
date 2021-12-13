@@ -328,7 +328,7 @@ class FormService
                     $replyTo = $this->getField($aggregateData, $data, 'replyTo');
 
                     // Get ReplyTo Name.
-                    $replyToName = null;
+                    $replyToName = '';
                     $name = $this->getField($aggregateData, $data, 'isName');
                     $firstname = $this->getField($aggregateData, $data, 'isFirstname');
                     if ($replyTo && $name && is_string($name)) {
@@ -345,7 +345,7 @@ class FormService
                     }
 
                     // Set Sender and From.
-                    $sender = new Address($formRead->getSender(), $replyToName ?? 'Website');
+                    $sender = new Address($formRead->getSender(), $replyToName);
                     $message->sender($sender);
                     $message->from($sender);
 
