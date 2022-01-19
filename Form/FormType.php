@@ -7,11 +7,13 @@ namespace RevisionTen\Forms\Form;
 use RevisionTen\CMS\Form\Types\CKEditorType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 class FormType extends AbstractType
 {
@@ -23,6 +25,8 @@ class FormType extends AbstractType
         $builder->add('title', TextType::class, [
             'label' => 'admin.label.title',
             'translation_domain' => 'cms',
+            'required' => true,
+            'constraints' => new NotBlank(),
         ]);
 
         $builder->add('email', TextType::class, [
@@ -31,6 +35,8 @@ class FormType extends AbstractType
             'attr' => [
                 'placeholder' => 'forms.placeholder.emails',
             ],
+            'required' => true,
+            'constraints' => new NotBlank(),
         ]);
 
         $builder->add('emailCC', TextType::class, [
@@ -51,9 +57,11 @@ class FormType extends AbstractType
             ],
         ]);
 
-        $builder->add('sender', TextType::class, [
+        $builder->add('sender', EmailType::class, [
             'label' => 'forms.label.sender',
             'translation_domain' => 'cms',
+            'required' => true,
+            'constraints' => new NotBlank(),
         ]);
 
         $builder->add('timelimit', NumberType::class, [
@@ -81,6 +89,7 @@ class FormType extends AbstractType
             'attr' => [
                 'rows' => 10,
             ],
+            'constraints' => new NotBlank(),
         ]);
 
         $builder->add('emailTemplateCopy', TextareaType::class, [
@@ -103,6 +112,7 @@ class FormType extends AbstractType
             'label' => 'forms.label.successText',
             'translation_domain' => 'cms',
             'required' => true,
+            'constraints' => new NotBlank(),
         ]);
 
         $builder->add('template', TextType::class, [
