@@ -45,8 +45,9 @@ class EntityItem extends Item
         $builder->add('entity_class', ChoiceType::class, [
             'label' => 'forms.label.entity_class',
             'translation_domain' => 'cms',
-            'required' => true,
             'choices' => $entityClasses,
+            'required' => true,
+            'constraints' => new NotBlank(),
         ]);
 
         $builder->add('placeholder', TextType::class, [
