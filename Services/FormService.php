@@ -357,7 +357,7 @@ class FormService
 
                     // Get the message body.
                     $isHtml = $formRead->getHtml();
-                    $body= $this->renderEmailTemplate($formRead->getEmailTemplate(),$data);
+                    $body = $this->renderTwigTemplate($formRead->getEmailTemplate(), $data);
                     if ($isHtml) {
                         $message->html($body);
                     } else {
@@ -370,7 +370,7 @@ class FormService
                         $messageCc = clone $message;
 
                         // Use cc email template.
-                        $body= $this->renderEmailTemplate($formRead->getEmailTemplateCopy(),$data);
+                        $body = $this->renderTwigTemplate($formRead->getEmailTemplateCopy(), $data);
                         if ($isHtml) {
                             $messageCc->html($body);
                         } else {
@@ -413,9 +413,11 @@ class FormService
                     }
 
                     // Display Success Message.
+                    $successTemplate = $formRead->getSuccessText();
+                    $successHtml = $this->renderTwigTemplate($successTemplate, $data);
                     $messages[] = [
                         'type' => 'success',
-                        'message' => $formRead->getSuccessText(),
+                        'message' => $successHtml,
                     ];
                 }
             }
@@ -530,17 +532,17 @@ class FormService
         $this->entityManager->flush();
     }
 
-    private function renderEmailTemplate(string $emailTemplate, $data): string
+    private function renderTwigTemplate(string $templateString, $data): string
     {
         // Try to render the twig template.
         try {
-            $view = $this->twig->createTemplate($emailTemplate);
+            $view = $this->twig->createTemplate($templateString);
             $body = $view->render($data);
         } catch (SyntaxError | Throwable $error) {
             $body = '';
             // If rendering the twig template fails json_encode the raw form data and send as plain text with error attached.
             if (method_exists($error, 'getRawMessage')) {
-                $body = 'An Error occurred: '.$error->getRawMessage()."\nPlease check your Email-Template at line ".$error->getTemplateLine().". \nHere is the raw form submission:";
+                $body = 'An Error occurred: '.$error->getRawMessage()."\nPlease check your Template at line ".$error->getTemplateLine().". \nHere is the raw form submission:";
                 $body .= "\n\n". json_encode($data, JSON_THROW_ON_ERROR);
             }
         }
