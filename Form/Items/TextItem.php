@@ -85,6 +85,7 @@ class TextItem extends Item
             'required' => $item['required'] ?? false,
             'attr' => $attributes,
             'constraints' => [],
+            'label_html' => true,
         ];
 
         if (isset($item['required']) && $item['required']) {

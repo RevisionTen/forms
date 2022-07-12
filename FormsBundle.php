@@ -8,7 +8,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class FormsBundle extends Bundle
 {
-    public const VERSION = '3.0.3';
+    public const VERSION = '3.0.4';
 }
 
 class_alias(FormRead::class, '\\RevisionTen\\Forms\\Model\\FormRead');

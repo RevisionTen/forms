@@ -101,6 +101,7 @@ class Item extends AbstractType implements ItemInterface
             'label' => !empty($item['hideLabel']) && $item['hideLabel'] ? false : $item['label'],
             'required' => $item['required'] ?? false,
             'attr' => $attributes,
+            'label_html' => true,
         ];
 
         if (isset($item['required']) && $item['required']) {
