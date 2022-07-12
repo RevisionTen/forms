@@ -102,6 +102,7 @@ class EntityItem extends Item
             'class' => $entityClass,
             'choice_label' => $item['choice_label'] ?? 'title',
             'placeholder' => $item['placeholder'] ?? $item['label'],
+            'label_html' => true,
         ];
 
         if (isset($item['required']) && $item['required']) {

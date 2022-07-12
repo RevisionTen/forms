@@ -23,6 +23,7 @@ class SubmitItem extends Item
     {
         $builder->add($item['name'], SubmitType::class, [
             'label' => $item['label'],
+            'label_html' => true,
         ]);
     }
 

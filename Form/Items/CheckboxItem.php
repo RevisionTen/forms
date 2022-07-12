@@ -47,6 +47,7 @@ class CheckboxItem extends Item
             'label_attr' => [
                 'class' => 'checkbox-custom',
             ],
+            'label_html' => true,
         ];
 
         if (isset($item['required']) && $item['required']) {

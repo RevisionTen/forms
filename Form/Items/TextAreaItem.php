@@ -48,6 +48,7 @@ class TextAreaItem extends TextItem
             'label' => !empty($item['hideLabel']) && $item['hideLabel'] ? false : $item['label'],
             'required' => $item['required'],
             'attr' => $attributes,
+            'label_html' => true,
         ];
 
         if (isset($item['required']) && $item['required']) {

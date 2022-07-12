@@ -100,6 +100,7 @@ class ChoiceItem extends Item
             'expanded' => $item['expanded'] ?? false,
             'multiple' => $item['multiple'] ?? false,
             'placeholder' => $item['placeholder'] ?? $item['label'],
+            'label_html' => true,
         ];
 
         // Make the emails unreadable in the frontend.
