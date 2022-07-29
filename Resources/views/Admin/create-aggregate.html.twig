@@ -1,0 +1,9 @@
+{% extends '@CMS/Backend/Form/form.html.twig' %}
+
+{% form_theme form '@CMS/Backend/Form/form_theme.html.twig' %}
+
+{% block content %}
+    <div class="p-4">
+        {% include '@Forms/Admin/form.html.twig' %}
+    </div>
+{% endblock %}

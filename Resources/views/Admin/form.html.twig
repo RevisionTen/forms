@@ -1,0 +1,100 @@
+
+<div class="row gx-5">
+    <div class="col-6 col-xxl-5">
+        {{ form_row(form.title) }}
+        {{ form_row(form.email) }}
+        {{ form_row(form.emailCC) }}
+        {{ form_row(form.emailBCC) }}
+        {{ form_row(form.sender) }}
+        {{ form_row(form.successText) }}
+        {{ form_row(form.scrollToSuccessText) }}
+        <hr class="my-4">
+        {{ form_row(form.saveSubmissions) }}
+        {{ form_row(form.trackSubmissions) }}
+        {{ form_row(form.disableCsrfProtection) }}
+    </div>
+    <div class="col-6 col-xxl-7">
+
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"
+                        id="template-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#template"
+                        type="button"
+                        role="tab"
+                        aria-controls="template"
+                        aria-selected="true">
+                    {{ form.emailTemplate.vars.label|trans({}, 'cms') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="template-copy-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#template-copy"
+                        type="button"
+                        role="tab"
+                        aria-controls="template-copy"
+                        aria-selected="false">
+                    {{ form.emailTemplateCopy.vars.label|trans({}, 'cms') }}
+                    +
+                    {{ form.timelimit.vars.label|trans({}, 'cms') }}
+                </button>
+            </li>
+        </ul>
+        <div class="tab-content pt-4">
+            <div class="tab-pane fade show active" id="template" role="tabpanel" aria-labelledby="template-tab">
+                <div class="w-100">
+                {{ form_row(form.emailTemplate, {
+                    attr: {
+                        style: 'height:600px;'
+                    }
+                }) }}
+
+                {{ form_row(form.html) }}
+
+                {% if itemVariables is defined and itemVariables %}
+                    <script type="text/javascript">
+                        // Script to select all text in clicked DOM element.
+                        function selectText(containerid) {
+                            if (document.selection) {
+                                var range = document.body.createTextRange();
+                                range.moveToElementText(document.getElementById(containerid));
+                                range.select();
+                            } else if (window.getSelection) {
+                                var range = document.createRange();
+                                range.selectNode(document.getElementById(containerid));
+                                window.getSelection().removeAllRanges();
+                                window.getSelection().addRange(range);
+                            }
+                        }
+                    </script>
+                    <p>
+                        {{ 'forms.label.twigVars'|trans({}, 'cms') }}:<br/>
+                        {% for key, vars in itemVariables %}
+                            {% for var in vars %}
+                                <code id="var-{{ key~loop.index }}" onclick="selectText('var-{{ key~loop.index }}')" class="text-nowrap">{% verbatim %}{{{% endverbatim %} {{ var }} {% verbatim %}}}{% endverbatim %}</code>
+                            {% endfor %}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+                </div>
+            </div>
+            <div class="tab-pane fade" id="template-copy" role="tabpanel" aria-labelledby="template-copy-tab">
+                <div class="w-100">
+                    {{ form_row(form.emailTemplateCopy, {
+                        attr: {
+                            style: 'height:400px;'
+                        }
+                    }) }}
+                    {{ form_row(form.timelimit) }}
+                    {{ form_row(form.timeLimitMessage) }}
+                    {{ form_row(form.template) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ form_rest(form) }}

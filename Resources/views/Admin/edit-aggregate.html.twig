@@ -1,5 +1,7 @@
 {% extends '@CMS/Backend/base.html.twig' %}
 
+{% form_theme form '@CMS/Backend/Form/form_theme.html.twig' %}
+
 {% block tabs %}
     <ul class="btn-group nav nav-pills" role="tablist">
         <li class="btn-group nav-item" role="presentation">
@@ -33,37 +35,7 @@
 
 {% block content %}
     <div class="p-4">
-
-        <div class="row">
-            <script type="text/javascript">
-              // Script to select all text in clicked DOM element.
-              function selectText(containerid) {
-                if (document.selection) {
-                  var range = document.body.createTextRange();
-                  range.moveToElementText(document.getElementById(containerid));
-                  range.select();
-                } else if (window.getSelection) {
-                  var range = document.createRange();
-                  range.selectNode(document.getElementById(containerid));
-                  window.getSelection().removeAllRanges();
-                  window.getSelection().addRange(range);
-                }
-              }
-            </script>
-            <div class="col-12">
-                <p>
-                    {{ 'forms.label.twigVars'|trans({}, 'cms') }}:<br/>
-                    {% for key, vars in itemVariables %}
-                        {% for var in vars %}
-                            <code id="var-{{ key~loop.index }}" onclick="selectText('var-{{ key~loop.index }}')" class="text-nowrap">{% verbatim %}{{{% endverbatim %} {{ var }} {% verbatim %}}}{% endverbatim %}</code>
-                        {% endfor %}
-                    {% endfor %}
-                </p>
-            </div>
-        </div>
-
-        {{ form_rest(form) }}
-
+        {% include '@Forms/Admin/form.html.twig' %}
     </div>
 {% endblock %}
 

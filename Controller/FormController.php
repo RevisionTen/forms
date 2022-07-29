@@ -222,7 +222,7 @@ class FormController extends AbstractController
             return $this->errorResponse($aggregateUuid);
         }
 
-        return $this->render('@CMS/Backend/Form/form.html.twig', [
+        return $this->render('@Forms/Admin/create-aggregate.html.twig', [
             'title' => $this->translator->trans('forms.label.addForm', [], 'cms'),
             'form' => $form->createView(),
         ]);
@@ -358,7 +358,7 @@ class FormController extends AbstractController
             return $this->errorResponse($formAggregate->getUuid());
         }
 
-        return $this->render('@forms/Admin/edit-aggregate.html.twig', [
+        return $this->render('@Forms/Admin/edit-aggregate.html.twig', [
             'form' => $form->createView(),
             'title' => $this->translator->trans('forms.label.editForm', [
                 '%title%' => $formAggregate->title,
