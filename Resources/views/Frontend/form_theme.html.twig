@@ -1,20 +1,3 @@
-{# Not used.
-{% extends ['bootstrap_4_layout.html.twig', 'bootstrap_3_layout.html.twig'] %}
-
-{%- block form_widget -%}
-    {% if attr.twig_variable is defined and attr.twig_variable %}
-        { # Set the value to the twig variable # }
-        {% set value = _context[attr.twig_variable] is defined ? _context[attr.twig_variable] : attr.twig_variable %}
-        { # Remove attribute # }
-        {% set newAttr = {} %}
-        {% for name, value in attr %}
-            {% set newAttr = newAttr|merge({name: value}) %}
-        {% endfor %}
-        {% set attr = newAttr %}
-    {% endif %}
-    {{- parent() -}}
-{%- endblock form_widget -%}
-#}
 
 {% block markup_widget %}
     {{ form.vars.markup|raw }}
