@@ -59,7 +59,7 @@ class FormSubmission
 
     /**
      * @var FormRead
-     * @ORM\ManyToOne(targetEntity="\RevisionTen\Forms\Model\FormRead")
+     * @ORM\ManyToOne(targetEntity="\RevisionTen\Forms\Entity\FormRead")
      * @ORM\JoinColumn(name="form_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      */
     private $form;
