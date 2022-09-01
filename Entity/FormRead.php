@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace RevisionTen\Forms\Entity;
 
+use DateTime;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -40,113 +42,113 @@ class FormRead
     /**
      * TODO: Switch to json once https://github.com/doctrine/doctrine2/pull/6988 is fixed.
      *
-     * @var array
+     * @var array|string|null
      *
      * @ORM\Column(type="text")
      */
-    private $payload;
+    private $payload = null;
 
     /**
-     * @var string
+     * @var string|null
      * @ORM\Column(type="string")
      */
-    private $title;
+    private ?string $title = null;
 
     /**
-     * @var string
+     * @var string|null
      * @ORM\Column(type="string")
      */
-    private $email;
+    private ?string $email = null;
 
     /**
      * @var string|null
      * @ORM\Column(type="string", nullable=true)
      */
-    private $emailCC;
+    private ?string $emailCC = null;
 
     /**
      * @var string|null
      * @ORM\Column(type="string", nullable=true)
      */
-    private $emailBCC;
+    private ?string $emailBCC = null;
 
     /**
-     * @var string
+     * @var string|null
      * @ORM\Column(type="string")
      */
-    private $sender;
+    private ?string $sender = null;
 
     /**
      * @var string|null
      * @ORM\Column(type="string", nullable=true)
      */
-    private $template;
+    private ?string $template = null;
 
     /**
      * @var string|null
      * @ORM\Column(type="text", nullable=true)
      */
-    private $emailTemplate;
-
-    /**
-     * @var string
-     * @ORM\Column(type="text", nullable=true)
-     */
-    private $emailTemplateCopy;
-
-    /**
-     * @var bool|null
-     * @ORM\Column(type="boolean", nullable=true)
-     */
-    private $html;
-
-    /**
-     * @var bool|null
-     * @ORM\Column(type="boolean", nullable=true)
-     */
-    private $deleted;
+    private ?string $emailTemplate = null;
 
     /**
      * @var string|null
      * @ORM\Column(type="text", nullable=true)
      */
-    private $successText;
+    private ?string $emailTemplateCopy = null;
 
     /**
      * @var bool|null
      * @ORM\Column(type="boolean", nullable=true)
      */
-    private $saveSubmissions;
+    private ?bool $html = null;
 
     /**
      * @var bool|null
      * @ORM\Column(type="boolean", nullable=true)
      */
-    private $trackSubmissions;
+    private ?bool $deleted = null;
+
+    /**
+     * @var string|null
+     * @ORM\Column(type="text", nullable=true)
+     */
+    private ?string $successText = null;
 
     /**
      * @var bool|null
      * @ORM\Column(type="boolean", nullable=true)
      */
-    private $disableCsrfProtection;
+    private ?bool $saveSubmissions = null;
 
     /**
      * @var bool|null
      * @ORM\Column(type="boolean", nullable=true)
      */
-    private $scrollToSuccessText;
+    private ?bool $trackSubmissions = null;
 
     /**
-     * @var \DateTime
+     * @var bool|null
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private ?bool $disableCsrfProtection = null;
+
+    /**
+     * @var bool|null
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private ?bool $scrollToSuccessText = null;
+
+    /**
+     * @var DateTime
      * @ORM\Column(type="datetime")
      */
-    private $created;
+    private $created = null;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      * @ORM\Column(type="datetime")
      */
-    private $modified;
+    private $modified = null;
 
     /**
      * @return string
@@ -529,19 +531,19 @@ class FormRead
     }
 
     /**
-     * @return \DateTime
+     * @return DateTime
      */
-    public function getCreated(): \DateTime
+    public function getCreated(): DateTime
     {
         return $this->created;
     }
 
     /**
-     * @param \DateTimeImmutable $created
+     * @param DateTimeImmutable $created
      *
      * @return FormRead
      */
-    public function setCreated(\DateTimeImmutable $created): self
+    public function setCreated(DateTimeImmutable $created): self
     {
         $this->created = $created;
 
@@ -549,19 +551,19 @@ class FormRead
     }
 
     /**
-     * @return \DateTime
+     * @return DateTime
      */
-    public function getModified(): \DateTime
+    public function getModified(): DateTime
     {
         return $this->modified;
     }
 
     /**
-     * @param \DateTimeImmutable $modified
+     * @param DateTimeImmutable $modified
      *
      * @return FormRead
      */
-    public function setModified(\DateTimeImmutable $modified): self
+    public function setModified(DateTimeImmutable $modified): self
     {
         $this->modified = $modified;
 

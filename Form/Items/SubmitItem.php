@@ -9,7 +9,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 
 class SubmitItem extends Item
 {
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         parent::buildForm($builder, $options);
 
@@ -19,7 +19,7 @@ class SubmitItem extends Item
         $builder->remove('popover');
     }
 
-    public function buildItem(FormBuilderInterface $builder, array $item)
+    public function buildItem(FormBuilderInterface $builder, array $item): void
     {
         $builder->add($item['name'], SubmitType::class, [
             'label' => $item['label'],

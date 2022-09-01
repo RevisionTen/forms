@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class TextAreaItem extends TextItem
 {
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         parent::buildForm($builder, $options);
 
@@ -18,7 +18,7 @@ class TextAreaItem extends TextItem
         $builder->remove('isName');
     }
 
-    public function buildItem(FormBuilderInterface $builder, array $item)
+    public function buildItem(FormBuilderInterface $builder, array $item): void
     {
         $attributes = [
             'aria-label' => $item['label'],

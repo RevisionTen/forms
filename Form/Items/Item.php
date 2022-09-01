@@ -24,7 +24,7 @@ class Item extends AbstractType implements ItemInterface
         ]);
     }
 
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add('label', TextType::class, [
             'label' => 'forms.label.label',
@@ -66,7 +66,7 @@ class Item extends AbstractType implements ItemInterface
         ]);
     }
 
-    public function buildItem(FormBuilderInterface $builder, array $itemOptions)
+    public function buildItem(FormBuilderInterface $builder, array $itemOptions): void
     {
         self::getItem($builder, $itemOptions);
     }

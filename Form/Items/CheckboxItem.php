@@ -57,9 +57,6 @@ class CheckboxItem extends Item
         $builder->add($item['name'], CheckboxType::class, $options);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getVariables(array $item): array
     {
         return [$item['name']." ? 'Yes' : 'No'"];

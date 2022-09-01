@@ -212,16 +212,14 @@ class FormService
         /**
          * Check for recent submissions by this ip on this form.
          *
-         * @var FormSubmission[] $formSubmissions
+         * @var FormSubmission $formSubmission
          */
-        $formSubmissions = $this->entityManager->getRepository(FormSubmission::class)->findBy([
+        $formSubmission = $this->entityManager->getRepository(FormSubmission::class)->findOneBy([
             'ip' => $ip,
             'form' => $formId,
         ], [
             'created' => Criteria::DESC,
-        ], 1);
-        /** @var FormSubmission $formSubmission */
-        $formSubmission = !empty($formSubmissions) ? array_values($formSubmissions)[0] : null;
+        ]);
 
         return null !== $formSubmission && time() < $formSubmission->getExpires()->getTimestamp();
     }
@@ -277,14 +275,13 @@ class FormService
 
         if ($ignore_validation === false) {
             // Check If user is blocked.
-            $timelimit = (int) ($aggregateData['timelimit'] ?? 0);
+            $timeLimit = (int) ($aggregateData['timelimit'] ?? 0);
             $ip = $request->getClientIp();
-            $isBlocked = $ip ? $timelimit && $this->isBlocked($ip, $formRead->getId()) : false;
+            $isBlocked = $ip && $timeLimit && $this->isBlocked($ip, $formRead->getId());
 
             // Display error If user is blocked.
             if ($isBlocked) {
-                $aggregateData = json_decode(json_encode($formRead->getPayload()), true, 512);
-                $timeLimitMessage = $aggregateData['timeLimitMessage'] ?? $this->translator->trans('forms.label.timeLimitError', [], 'cms');
+                $timeLimitMessage = (string) ($aggregateData['timeLimitMessage'] ?? $this->translator->trans('forms.label.timeLimitError', [], 'cms'));
                 if ($form->isSubmitted()) {
                     $form->addError(new FormError($timeLimitMessage));
                 } else {
@@ -299,9 +296,6 @@ class FormService
             if ($isBlocked === false && $form->isSubmitted()) {
                 // Get the full submitted form data.
                 $submittedData = array_map(static function ($field) {
-                    /**
-                     * @var FormInterface $field
-                     */
                     return $field->getData();
                 }, $form->all());
                 $data = array_merge($defaultData, $submittedData);
@@ -399,9 +393,9 @@ class FormService
                     $this->mailer->send($message);
 
                     // Save submission in submission table.
-                    if ($timelimit || $formRead->getSaveSubmissions()) {
+                    if ($timeLimit || $formRead->getSaveSubmissions()) {
                         $this->saveFormSubmission(
-                            $timelimit,
+                            $timeLimit,
                             $ip,
                             $formRead,
                             $data,

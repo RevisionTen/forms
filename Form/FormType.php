@@ -17,10 +17,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class FormType extends AbstractType
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add('title', TextType::class, [
             'label' => 'admin.label.title',

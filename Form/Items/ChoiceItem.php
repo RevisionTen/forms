@@ -13,9 +13,6 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 class ChoiceItem extends Item
 {
-    /**
-     * {@inheritdoc}
-     */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         parent::buildForm($builder, $options);
@@ -55,10 +52,7 @@ class ChoiceItem extends Item
         ]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function buildItem(FormBuilderInterface $builder, array $item)
+    public function buildItem(FormBuilderInterface $builder, array $item): void
     {
         $attributes = [
             'aria-label' => $item['label'],
@@ -125,9 +119,6 @@ class ChoiceItem extends Item
         $builder->add($item['name'], ChoiceType::class, $options);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getVariables(array $item): array
     {
         $var = $item['multiple'] ? $item['name']."|join(', ')" : $item['name'];

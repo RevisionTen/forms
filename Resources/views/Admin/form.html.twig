@@ -74,7 +74,9 @@
                         {{ 'forms.label.twigVars'|trans({}, 'cms') }}:<br/>
                         {% for key, vars in itemVariables %}
                             {% for var in vars %}
-                                <code id="var-{{ key~loop.index }}" onclick="selectText('var-{{ key~loop.index }}')" class="text-nowrap">{% verbatim %}{{{% endverbatim %} {{ var }} {% verbatim %}}}{% endverbatim %}</code>
+                                <code id="var-{{ key~loop.index }}"
+                                      onclick="selectText('var-{{ key~loop.index }}')"
+                                      class="text-nowrap">{% verbatim %}{{{% endverbatim %} {{ var }} {% verbatim %}}}{% endverbatim %}</code>
                             {% endfor %}
                         {% endfor %}
                     </p>
