@@ -22,7 +22,7 @@ class EntityItem extends Item
         $this->entityManager = $entityManager;
     }
 
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         parent::buildForm($builder, $options);
 
@@ -69,7 +69,7 @@ class EntityItem extends Item
         ]);
     }
 
-    public function buildItem(FormBuilderInterface $builder, array $item)
+    public function buildItem(FormBuilderInterface $builder, array $item): void
     {
         $attributes = [
             'aria-label' => $item['label'],

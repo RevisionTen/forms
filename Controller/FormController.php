@@ -22,7 +22,6 @@ use RevisionTen\Forms\Handler\FormBaseHandler;
 use RevisionTen\Forms\Interfaces\ItemInterface;
 use RevisionTen\Forms\Model\Form;
 use RevisionTen\Forms\Entity\FormRead;
-use RevisionTen\Forms\Entity\FormSubmission;
 use RevisionTen\Forms\Services\FormService;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
@@ -35,21 +34,15 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use function array_intersect_key;
 use function array_key_exists;
-use function array_map;
-use function class_exists;
 use function count;
-use function defined;
 use function is_array;
 use function json_decode;
 use function json_encode;
-use function rsort;
 use function strcmp;
 
 /**
@@ -194,7 +187,10 @@ class FormController extends AbstractController
          */
         $user = $this->getUser();
 
-        $form = $this->createForm(FormType::class);
+        $form = $this->createForm(FormType::class, [
+            'saveSubmissions' => true,
+            'scrollToSuccessText' => true,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -635,7 +631,7 @@ class FormController extends AbstractController
         $request = $this->requestStack->getMainRequest();
         $handledRequest = $this->formService->handleRequest($request, $formUuid, $defaultData);
 
-        // Get the forms template.
+        // Get the forms' template.
         $baseTemplate = $handledRequest['template'] ?? '@forms/Frontend/form.html.twig';
         $template = $template ?: $baseTemplate;
 

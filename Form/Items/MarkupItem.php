@@ -7,14 +7,10 @@ namespace RevisionTen\Forms\Form\Items;
 use RevisionTen\CMS\Form\Types\CKEditorType;
 use RevisionTen\Forms\Form\MarkupType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 class MarkupItem extends Item
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         parent::buildForm($builder, $options);
 
@@ -29,10 +25,7 @@ class MarkupItem extends Item
         ]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function buildItem(FormBuilderInterface $builder, array $item)
+    public function buildItem(FormBuilderInterface $builder, array $item): void
     {
         $options = [
             'label' => false,
@@ -43,9 +36,6 @@ class MarkupItem extends Item
         $builder->add($item['name'], MarkupType::class, $options);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getVariables(array $item): array
     {
         return [];
