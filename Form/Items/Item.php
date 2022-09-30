@@ -30,12 +30,14 @@ class Item extends AbstractType implements ItemInterface
             'label' => 'forms.label.label',
             'translation_domain' => 'cms',
             'required' => true,
+            'constraints' => new NotBlank(),
         ]);
 
         $builder->add('name', TextType::class, [
             'label' => 'forms.label.name',
             'translation_domain' => 'cms',
             'required' => true,
+            'constraints' => new NotBlank(),
             'attr' => [
                 'placeholder' => 'forms.placeholder.name',
             ],
