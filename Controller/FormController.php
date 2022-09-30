@@ -371,10 +371,11 @@ class FormController extends AbstractController
      * @param string     $itemName
      * @param array|null $data
      * @param array|null $items
+     * @param bool|null $ignore_validation
      *
      * @return FormInterface
      */
-    private function getItemForm(string $itemName, array $data = null, array $items = null): FormInterface
+    private function getItemForm(string $itemName, array $data = null, array $items = null, ?bool $ignore_validation = null): FormInterface
     {
         $data = $data ?? ['data' => []];
         $formClass = $this->formService->getItemClass($itemName);
@@ -382,6 +383,7 @@ class FormController extends AbstractController
         return $this->createForm(ItemType::class, $data, [
             'formClass' => $formClass,
             'items' => $items,
+            'validation_groups' => $ignore_validation ? false : null,
         ]);
     }
 
@@ -409,10 +411,11 @@ class FormController extends AbstractController
          */
         $aggregate = $this->aggregateFactory->build($formUuid, Form::class, $onVersion, $user->getId());
 
-        $form = $this->getItemForm($itemName, null, $aggregate->items);
+        $ignore_validation = (bool) $request->get('ignore_validation');
+        $form = $this->getItemForm($itemName, null, $aggregate->items, $ignore_validation);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        if (!$ignore_validation && $form->isSubmitted() && $form->isValid()) {
             $data = $form->getData()['data'];
 
             // Execute Command.
@@ -486,10 +489,11 @@ class FormController extends AbstractController
         ], 'cms');
 
         if ($item && isset($item['data'], $item['itemName'])) {
-            $form = $this->getItemForm($item['itemName'], $item, $aggregate->items);
+            $ignore_validation = (bool) $request->get('ignore_validation');
+            $form = $this->getItemForm($item['itemName'], $item, $aggregate->items, $ignore_validation);
             $form->handleRequest($request);
 
-            if ($form->isSubmitted()) {
+            if (!$ignore_validation && $form->isSubmitted()) {
                 // Get differences in data and check if data has changed.
                 $data = $form->getData()['data'];
                 // Remove data that hasn't changed.
