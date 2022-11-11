@@ -399,8 +399,12 @@ class FormController extends AbstractController
      * @throws Exception
      * @return Response
      */
-    public function formAddItem(Request $request, string $formUuid, int $onVersion, string $parent = null, string $itemName): Response
+    public function formAddItem(Request $request, string $formUuid, int $onVersion, string $parent = null, string $itemName = null): Response
     {
+        if (null === $itemName) {
+            throw new Exception('$itemName must not be null');
+        }
+
         /**
          * @var UserInterface $user
          */
@@ -630,7 +634,7 @@ class FormController extends AbstractController
      * @return Response
      * @throws Exception
      */
-    public function renderCmsForm(string $formUuid, string $template = null, array $defaultData): Response
+    public function renderCmsForm(string $formUuid, string $template = null, array $defaultData = []): Response
     {
         $request = $this->requestStack->getMainRequest();
         $handledRequest = $this->formService->handleRequest($request, $formUuid, $defaultData);

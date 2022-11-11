@@ -100,7 +100,12 @@
                             <div class="dropdown-menu">
                                 {% for name, itemType in config.item_types %}
                                     <a class="dropdown-item"
-                                       href="{{ path('forms_add_item', {formUuid: uuid, onVersion: version, itemName: name}) }}"
+                                       href="{{ path('forms_add_item', {
+                                           formUuid: uuid,
+                                           onVersion: version,
+                                           parent: null,
+                                           itemName: name
+                                       }) }}"
                                     >
                                         <span class="fa {{ itemType.icon }}"></span>
                                         {{ name|trans({}, 'cms')|trans }}
