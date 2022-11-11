@@ -50,12 +50,12 @@ interface ItemInterface extends FormTypeInterface
      *
      * @param array         $data     the forms submitted data
      * @param array         $item     the item
-     * @param ?FormRead      $formRead the forms read entity
+     * @param FormRead|null $formRead the forms read entity
      * @param FormInterface $form     the form
      *
      * @return bool
      */
-    public function onSubmit(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool;
+    public function onSubmit(array $data, array $item, ?FormRead $formRead, FormInterface $form): bool;
 
     /**
      * This method is called when the form is submitted.
@@ -63,10 +63,10 @@ interface ItemInterface extends FormTypeInterface
      *
      * @param array         $data     the forms submitted data
      * @param array         $item     the item
-     * @param ?FormRead      $formRead the forms read entity
+     * @param FormRead|null $formRead the forms read entity
      * @param FormInterface $form     the form
      *
      * @return bool
      */
-    public function onValidate(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool;
+    public function onValidate(array $data, array $item, ?FormRead $formRead, FormInterface $form): bool;
 }

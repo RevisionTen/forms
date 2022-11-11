@@ -12,18 +12,18 @@ abstract class FormBaseHandler
     /**
      * Checks of the provided item matches or its child items.
      *
-     * @param array    $item
-     * @param string   $itemUuid
-     * @param callable $callable
-     * @param array    $collection
+     * @param array $item
+     * @param string $itemUuid
+     * @param callable|null $callable $callable
+     * @param array $collection
      *
      * @return mixed
      */
-    private static function getMatching(array &$item, string $itemUuid, callable $callable = null, array &$collection)
+    private static function getMatching(array &$item, string $itemUuid, ?callable $callable, array &$collection)
     {
         // Return true if this item is the one we are looking for.
         if (isset($item['uuid']) && $item['uuid'] === $itemUuid) {
-            if ($callable) {
+            if (null !== $callable) {
                 $callable($item, $collection);
             }
 

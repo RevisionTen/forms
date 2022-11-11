@@ -123,12 +123,12 @@ class Item extends AbstractType implements ItemInterface
         return $itemData;
     }
 
-    public function onSubmit(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool
+    public function onSubmit(array $data, array $item, ?FormRead $formRead, FormInterface $form): bool
     {
         return true;
     }
 
-    public function onValidate(array $data, array $item, FormRead $formRead = null, FormInterface $form): bool
+    public function onValidate(array $data, array $item, ?FormRead $formRead, FormInterface $form): bool
     {
         return true;
     }

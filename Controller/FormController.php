@@ -626,10 +626,9 @@ class FormController extends AbstractController
     }
 
     /**
-     * @param RequestStack $requestStack
-     * @param string       $formUuid
-     * @param string|null  $template
-     * @param array        $defaultData
+     * @param string $formUuid
+     * @param string|null $template
+     * @param array $defaultData
      *
      * @return Response
      * @throws Exception
@@ -637,6 +636,9 @@ class FormController extends AbstractController
     public function renderCmsForm(string $formUuid, string $template = null, array $defaultData = []): Response
     {
         $request = $this->requestStack->getMainRequest();
+        if (null === $request) {
+            throw new Exception('$request is null');
+        }
         $handledRequest = $this->formService->handleRequest($request, $formUuid, $defaultData);
 
         // Get the forms' template.
