@@ -181,6 +181,9 @@ class FormService
             $itemClass = $this->getItemClass($item['itemName']);
             // Get the form as a service or instantiate it.
             try {
+                /**
+                 * @var object $itemForm
+                 */
                 $itemForm = $this->container->get($itemClass);
             } catch (ServiceNotFoundException $exception) {
                 $itemForm = new $itemClass();
@@ -360,7 +363,7 @@ class FormService
 
 
                     // Send different emails to main recipient and copy recipients.
-                    if (!empty($formRead->getEmailTemplateCopy()) && ($cc || $bcc)) {
+                    if (($cc || $bcc) && !empty($formRead->getEmailTemplateCopy())) {
                         $messageCc = clone $message;
 
                         // Use cc email template.
