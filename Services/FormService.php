@@ -304,9 +304,9 @@ class FormService
                 $data = array_merge($defaultData, $submittedData);
 
                 // Check if the form is valid.
-                $isValid = $form->isValid() && $this->onValidate($form,$formRead, $data);
+                $isValid = $form->isValid() && $this->onValidate($form, $formRead, $data);
 
-                if ($submit && $isValid && $this->onSubmit($form,$formRead, $data)) {
+                if ($submit && $isValid && $this->onSubmit($form, $formRead, $data)) {
 
                     // Build and send the email.
                     $message = new Email();
@@ -439,7 +439,7 @@ class FormService
      * @param array $data
      * @return bool
      */
-    private function onValidate($form, FormRead $formRead, array $data): bool
+    private function onValidate($form, FormRead $formRead, array &$data): bool
     {
         $aggregateData = $formRead->getPayload();
 
@@ -472,7 +472,7 @@ class FormService
      * @param array $data
      * @return bool
      */
-    private function onSubmit($form, FormRead $formRead, array $data): bool
+    private function onSubmit($form, FormRead $formRead, array &$data): bool
     {
         $aggregateData = $formRead->getPayload();
 
