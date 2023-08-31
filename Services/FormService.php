@@ -420,6 +420,15 @@ class FormService
             }
         }
 
+        // Check if the form is invalid or reloaded.
+        // If so, set the _invalidForm attribute in the request object.
+        // This attribute can be read in a ResponseListener, to determine
+        // if the status code should be set to 422 in order to support Turbo forms.
+        // @see https://turbo.hotwired.dev/handbook/drive#redirecting-after-a-form-submission
+        if ($form->isSubmitted() && ($ignore_validation || !$form->isValid())) {
+            $request->attributes->set('_invalidForm', true);
+        }
+
         return [
             'template' => $formRead->getTemplate(),
             'ignore_validation' => $ignore_validation,
