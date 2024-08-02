@@ -74,7 +74,7 @@ class ChoiceItem extends Item
             $attributes['data-content'] = $item['popover'];
         }
 
-        $choices = explode("\n", $item['choices']);
+        $choices = explode("\n", $item['choices'] ?? '');
         $parsedChoices = [];
         foreach ($choices as $key => $line) {
             if (false !== strpos($line, '|')) {
