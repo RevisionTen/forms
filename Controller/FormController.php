@@ -127,7 +127,7 @@ class FormController extends AbstractController
      *
      * @return JsonResponse|RedirectResponse|Response
      */
-    public function errorResponse(string $formUuid = null)
+    public function errorResponse(?string $formUuid = null)
     {
         $messages = $this->messageBus->getMessagesJson();
 
@@ -375,7 +375,7 @@ class FormController extends AbstractController
      *
      * @return FormInterface
      */
-    private function getItemForm(string $itemName, array $data = null, array $items = null, ?bool $ignore_validation = null): FormInterface
+    private function getItemForm(string $itemName, ?array $data = null, ?array $items = null, ?bool $ignore_validation = null): FormInterface
     {
         $data = $data ?? ['data' => []];
         $formClass = $this->formService->getItemClass($itemName);
@@ -399,7 +399,7 @@ class FormController extends AbstractController
      * @throws Exception
      * @return Response
      */
-    public function formAddItem(Request $request, string $formUuid, int $onVersion, string $parent = null, string $itemName = null): Response
+    public function formAddItem(Request $request, string $formUuid, int $onVersion, ?string $parent = null, ?string $itemName = null): Response
     {
         if (null === $itemName) {
             throw new Exception('$itemName must not be null');
@@ -633,7 +633,7 @@ class FormController extends AbstractController
      * @return Response
      * @throws Exception
      */
-    public function renderCmsForm(string $formUuid, string $template = null, array $defaultData = []): Response
+    public function renderCmsForm(string $formUuid, ?string $template = null, array $defaultData = []): Response
     {
         $request = $this->requestStack->getMainRequest();
         if (null === $request) {
