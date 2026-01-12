@@ -283,7 +283,7 @@ class FormRead
      *
      * @return FormRead
      */
-    public function setEmailCC(string $emailCC = null): self
+    public function setEmailCC(?string $emailCC = null): self
     {
         $this->emailCC = $emailCC;
 
@@ -303,7 +303,7 @@ class FormRead
      *
      * @return FormRead
      */
-    public function setEmailBCC(string $emailBCC = null): self
+    public function setEmailBCC(?string $emailBCC = null): self
     {
         $this->emailBCC = $emailBCC;
 
@@ -363,7 +363,7 @@ class FormRead
      *
      * @return FormRead
      */
-    public function setEmailTemplate(string $emailTemplate = null): self
+    public function setEmailTemplate(?string $emailTemplate = null): self
     {
         $this->emailTemplate = $emailTemplate;
 
@@ -383,7 +383,7 @@ class FormRead
      *
      * @return FormRead
      */
-    public function setEmailTemplateCopy(string $emailTemplateCopy = null): self
+    public function setEmailTemplateCopy(?string $emailTemplateCopy = null): self
     {
         $this->emailTemplateCopy = $emailTemplateCopy;
 
